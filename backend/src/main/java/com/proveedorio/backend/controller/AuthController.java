@@ -6,14 +6,12 @@ import com.proveedorio.backend.entity.Role;
 import com.proveedorio.backend.entity.User;
 import com.proveedorio.backend.repository.UserRepository;
 import com.proveedorio.backend.security.JwtService;
-import com.proveedorio.backend.service.RoleService;
-import com.proveedorio.backend.service.UserService;
+import com.proveedorio.backend.service.auth.RoleService;
+import com.proveedorio.backend.service.auth.UserService;
 import com.proveedorio.backend.util.ApiResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**

@@ -4,7 +4,7 @@ import com.proveedorio.backend.dtos.supplier.SupplierDashboardDto;
 import com.proveedorio.backend.dtos.supplier.SupplierRequestDto;
 import com.proveedorio.backend.dtos.supplier.SupplierResponseDto;
 import com.proveedorio.backend.dtos.supplier.SupplierSimpleDto;
-import com.proveedorio.backend.service.SupplierService;
+import com.proveedorio.backend.service.supplier.SupplierService;
 import com.proveedorio.backend.util.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

@@ -2,7 +2,7 @@ package com.proveedorio.backend.controller;
 
 import com.proveedorio.backend.dtos.supplier.SupplierMappingDto;
 import com.proveedorio.backend.dtos.supplier.SupplierMappingRequestDto;
-import com.proveedorio.backend.service.ProviderMappingService;
+import com.proveedorio.backend.service.supplier.ProviderMappingService;
 import com.proveedorio.backend.util.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.auth;
 
 import com.proveedorio.backend.dtos.auth.UserDto;
 import com.proveedorio.backend.entity.Role;

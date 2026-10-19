@@ -1,5 +1,7 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.pricing;
 
+import com.proveedorio.backend.service.NotificationService;
+import com.proveedorio.backend.service.product.ProductSupplierService;
 import com.proveedorio.backend.dtos.pricing.PriceHistoryItemDto;
 import com.proveedorio.backend.entity.MasterProduct;
 import com.proveedorio.backend.entity.PriceHistory;

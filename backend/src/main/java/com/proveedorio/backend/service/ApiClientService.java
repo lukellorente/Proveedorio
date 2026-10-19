@@ -1,5 +1,6 @@
 package com.proveedorio.backend.service;
 
+import com.proveedorio.backend.service.auth.EncryptionService;
 import com.proveedorio.backend.entity.Supplier;
 import com.proveedorio.backend.entity.SyncLog;
 import com.proveedorio.backend.repository.SyncLogRepository;

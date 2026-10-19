@@ -3,7 +3,6 @@ package com.proveedorio.backend.service.dashboard;
 import com.proveedorio.backend.dtos.dashboard.SupplierHealthDto;
 import com.proveedorio.backend.repository.ProductSupplierRepository;
 import com.proveedorio.backend.repository.SyncLogRepository;
-import com.proveedorio.backend.repository.SupplierRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +18,11 @@ public class SupplierHealthService {
 
     private final SyncLogRepository syncLogRepository;
     private final ProductSupplierRepository productSupplierRepository;
-    private final SupplierRepository supplierRepository;
 
     public SupplierHealthService(SyncLogRepository syncLogRepository,
-                                  ProductSupplierRepository productSupplierRepository,
-                                  SupplierRepository supplierRepository) {
+                                  ProductSupplierRepository productSupplierRepository) {
         this.syncLogRepository = syncLogRepository;
         this.productSupplierRepository = productSupplierRepository;
-        this.supplierRepository = supplierRepository;
     }
 
     /**
@@ -126,9 +122,6 @@ public class SupplierHealthService {
 
     private Map<Integer, Long> buildAvgLatencyMap() {
         Map<Integer, Long> map = new HashMap<>();
-        for (Object[] row : syncLogRepository.findAvgItemsPerSyncPerSupplier()) {
-            // We need latency from a different query - use findAverageLatencyBySupplierId per supplier
-        }
         // Use latency trend data for the most recent week
         for (Object[] row : syncLogRepository.findLatencyTrendPerSupplier()) {
             Integer id = toInt(row[0]);

@@ -1,5 +1,6 @@
 package com.proveedorio.backend.service;
 
+import com.proveedorio.backend.service.transformation.TransformationStrategy;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

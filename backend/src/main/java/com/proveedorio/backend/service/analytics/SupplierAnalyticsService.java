@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,10 +37,6 @@ import java.util.List;
 public class SupplierAnalyticsService {
 
     private static final Logger log = LoggerFactory.getLogger(SupplierAnalyticsService.class);
-
-    private static final int DEFAULT_MONTHS        = 6;
-    private static final double DEFAULT_OUTLIER_THRESHOLD = 50.0;
-    private static final int DEFAULT_ML_MAX_ROWS   = 1000;
 
     private final PriceHistoryRepository    priceHistoryRepository;
     private final ProductSupplierRepository productSupplierRepository;
@@ -324,19 +319,6 @@ public class SupplierAnalyticsService {
 
     private String str(Object v) {
         return v != null ? v.toString() : null;
-    }
-
-    private boolean toBoolean(Object v) {
-        if (v == null) return false;
-        if (v instanceof Boolean b) return b;
-        if (v instanceof Number n) return n.intValue() == 1;
-        return "1".equals(v.toString()) || "true".equalsIgnoreCase(v.toString());
-    }
-
-    private LocalDateTime toLocalDateTime(Object v) {
-        if (v == null) return null;
-        if (v instanceof LocalDateTime ldt) return ldt;
-        return null;
     }
 
     private double toDouble(Object v) {

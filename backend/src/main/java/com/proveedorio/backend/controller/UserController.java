@@ -1,7 +1,7 @@
 package com.proveedorio.backend.controller;
 
 import com.proveedorio.backend.dtos.auth.UserDto;
-import com.proveedorio.backend.service.UserService;
+import com.proveedorio.backend.service.auth.UserService;
 import com.proveedorio.backend.util.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

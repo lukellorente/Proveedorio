@@ -1,5 +1,8 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.product;
 
+import com.proveedorio.backend.service.ApiClientService;
+import com.proveedorio.backend.service.NotificationService;
+import com.proveedorio.backend.service.UniversalMapperService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +16,6 @@ import com.proveedorio.backend.entity.MasterProduct;
 import com.proveedorio.backend.entity.ProductSupplier;
 import com.proveedorio.backend.entity.Supplier;
 import com.proveedorio.backend.repository.MasterProductRepository;
-import com.proveedorio.backend.repository.ProductSupplierRepository;
 import com.proveedorio.backend.repository.SupplierRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +42,7 @@ import java.util.stream.Collectors;
  * Implementación principal del servicio de inventario.
  * Coordina la búsqueda y listado de productos maestros, la sincronización con catálogos de proveedores
  * y la construcción de DTOs para el listado consolidado y el detalle de producto.
- * Utiliza {@link MasterProductRepository}, {@link ProductSupplierRepository}, {@link ApiClientService},
+ * Utiliza {@link MasterProductRepository}, {@link ApiClientService},
  * {@link UniversalMapperService} y {@link ProductSupplierService} para obtener y persistir datos.
  */
 @Service
@@ -50,7 +52,6 @@ public class StockServiceImpl implements IStockService {
     private static final int MIN_STOCK_THRESHOLD = 5;
 
     private final MasterProductRepository masterProductRepository;
-    private final ProductSupplierRepository productSupplierRepository;
     private final SupplierRepository supplierRepository;
     private final ApiClientService apiClientService;
     private final UniversalMapperService universalMapperService;
@@ -62,7 +63,6 @@ public class StockServiceImpl implements IStockService {
     private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     public StockServiceImpl(MasterProductRepository masterProductRepository,
-                            ProductSupplierRepository productSupplierRepository,
                             SupplierRepository supplierRepository,
                             ApiClientService apiClientService,
                             UniversalMapperService universalMapperService,
@@ -71,7 +71,6 @@ public class StockServiceImpl implements IStockService {
                             NotificationService notificationService,
                             ObjectMapper objectMapper) {
         this.masterProductRepository = masterProductRepository;
-        this.productSupplierRepository = productSupplierRepository;
         this.supplierRepository = supplierRepository;
         this.apiClientService = apiClientService;
         this.universalMapperService = universalMapperService;
@@ -300,8 +299,6 @@ public class StockServiceImpl implements IStockService {
                         master.setTechSpecs(objectMapper.writeValueAsString(merged));
                     } catch (JsonProcessingException e) {
                         // Si falla el merge, dejamos las nuevas especificaciones tal cual
-                        master.setTechSpecs(data.techSpecs());
-                    } catch (IOException e) {
                         master.setTechSpecs(data.techSpecs());
                     }
                 }

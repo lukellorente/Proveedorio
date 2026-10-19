@@ -9,7 +9,7 @@ import com.proveedorio.backend.repository.ProviderMappingRepository;
 import com.proveedorio.backend.repository.RoleRepository;
 import com.proveedorio.backend.repository.UserRepository;
 import com.proveedorio.backend.service.CurrencyRateService;
-import com.proveedorio.backend.service.EncryptionService;
+import com.proveedorio.backend.service.auth.EncryptionService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;

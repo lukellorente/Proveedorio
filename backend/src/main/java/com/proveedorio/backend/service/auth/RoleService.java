@@ -1,4 +1,4 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.auth;
 
 import com.proveedorio.backend.entity.Role;
 import com.proveedorio.backend.repository.RoleRepository;
