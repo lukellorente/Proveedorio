@@ -1,0 +1,19 @@
+.product-table__mpn {
+  white-space: nowrap;
+}
+
+.product-table__model {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.product-table__specs {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}

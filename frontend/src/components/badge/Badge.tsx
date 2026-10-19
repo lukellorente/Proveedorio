@@ -7,7 +7,7 @@ interface BadgeProps {
 }
 export const Badge = ({ variant = 'neutral', children, className = '' }: BadgeProps) => {
   return (
-    <span className={`badge badge-${variant} ${className}`}>
+    <span className={['badge', `badge--${variant}`, className].filter(Boolean).join(' ')}>
       {children}
     </span>
   );

@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from 'features/auth/context/AuthContext';
-import AppLayout from 'components/layout/AppLayout';
+import AppShell from 'components/layout/AppShell';
 import { ErrorProvider } from 'features/errors/context/ErrorContext';
 
 const ProtectedRoute = () => {
@@ -12,9 +12,9 @@ const ProtectedRoute = () => {
 
   return (
     <ErrorProvider>
-      <AppLayout>
+      <AppShell>
         <Outlet />
-      </AppLayout>
+      </AppShell>
     </ErrorProvider>
   );
 };

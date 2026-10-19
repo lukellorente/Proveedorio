@@ -18,6 +18,7 @@ import PriceHistoryPage from './features/priceHistory/pages/PriceHistoryPage';
 import CartPage from 'features/cart/pages/CartPage';
 import { CartProvider } from 'features/cart/context/CartContext';
 import ErrorBoundary from 'components/ui/ErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const AppRoutes = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" />
       <Router>
         <AuthProvider>
           <CartProvider>

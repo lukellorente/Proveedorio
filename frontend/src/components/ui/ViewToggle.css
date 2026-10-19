@@ -1,0 +1,47 @@
+.view-toggle {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background-color: var(--brand-100);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.view-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.view-toggle__option span {
+  display: inline-flex;
+}
+
+.view-toggle__option svg {
+  width: 16px;
+  height: 16px;
+}
+
+.view-toggle__option:hover {
+  color: var(--text-primary);
+}
+
+.view-toggle__option--active {
+  background-color: var(--bg-secondary);
+  color: var(--color-brand-title);
+  box-shadow: var(--shadow-sm);
+}
+
+.view-toggle__option:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}

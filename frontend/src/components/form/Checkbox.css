@@ -1,0 +1,25 @@
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 24px;
+}
+
+.checkbox__input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--corp-institutional);
+  cursor: pointer;
+}
+
+.checkbox__input:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.checkbox__label {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
