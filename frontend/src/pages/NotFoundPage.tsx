@@ -1,16 +1,22 @@
 import { Link } from 'react-router-dom';
-import './NotFoundPage.css';
+import { ArrowLeft } from 'lucide-react';
+import AuthLayout from 'components/layout/AuthLayout';
+import { buttonClassName } from 'components/ui/buttonClassName';
 
-const NotFoundPage = () => {
-  return (
-    <div className="not-found-container">
-      <h1 className="not-found-title">404</h1>
-      <p className="not-found-text">Página no encontrada</p>
-      <Link to="/" className="not-found-link">
-        Volver al inicio
+const NotFoundPage = () => (
+  <AuthLayout>
+    <div className="auth-layout__content">
+      <p className="auth-layout__eyebrow tabular-nums">Error 404</p>
+      <h1 className="auth-layout__title">Página no encontrada</h1>
+      <p className="auth-layout__subtitle">
+        La dirección no existe o ha cambiado. Comprueba el enlace o vuelve al catálogo.
+      </p>
+      <Link to="/" className={buttonClassName('primary')}>
+        <span className="button__icon" aria-hidden="true"><ArrowLeft /></span>
+        Volver a Productos
       </Link>
     </div>
-  );
-};
+  </AuthLayout>
+);
 
 export default NotFoundPage;

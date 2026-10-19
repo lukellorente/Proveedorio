@@ -1,0 +1,30 @@
+.description-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-4) var(--space-6);
+  margin: 0;
+}
+
+.description-list--single {
+  grid-template-columns: 1fr;
+}
+
+.description-list__item {
+  min-width: 0;
+}
+
+.description-list__term {
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.description-list__value {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}

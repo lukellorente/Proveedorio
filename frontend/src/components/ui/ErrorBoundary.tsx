@@ -1,5 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { RotateCcw, TriangleAlert } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
+import { EmptyState } from './EmptyState';
+import { Button } from './Button';
 
 interface Props {
     children?: ReactNode;
@@ -37,25 +39,16 @@ class ErrorBoundary extends Component<Props, State> {
     public render() {
         if (this.state.hasError) {
             return (
-                <div className="error-boundary-box">
-                    <h3 style={{ margin: "0 0 10px 0", fontSize: "1.1rem", display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <TriangleAlert size={18} aria-hidden="true" />
-                        {this.props.fallbackMessage || "Ocurrió un error inesperado al cargar esta sección."}
-                    </h3>
-                    <p style={{ margin: "0 0 1rem 0", fontSize: "0.875rem", opacity: 0.8 }}>
-                        {this.state.error?.message}
-                    </p>
-                    {this.props.onRetry && (
-                        <button
-                            onClick={this.resetError}
-                            className="btn btn-secondary"
-                            style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                        >
-                            <RotateCcw size={14} aria-hidden="true" />
+                <EmptyState
+                    tone="error"
+                    title={this.props.fallbackMessage || 'Ocurrió un error inesperado al cargar esta sección.'}
+                    description={this.state.error?.message}
+                    action={this.props.onRetry && (
+                        <Button variant="secondary" size="sm" icon={<RotateCcw />} onClick={this.resetError}>
                             Reintentar
-                        </button>
+                        </Button>
                     )}
-                </div>
+                />
             );
         }
 

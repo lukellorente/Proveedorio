@@ -1,10 +1,18 @@
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { ArrowRight, Download, ShoppingCart, Trash2 } from 'lucide-react';
 import { useCart } from '../context/useCart';
+import { CartItem } from '../context/CartContext';
 import { exportPurchaseOrder } from '@/utils/exportPurchaseOrder';
 import { formatCurrency } from '@/utils/formatting';
-import { ArrowRight, Download, FileText, ShoppingCart, Trash2 } from 'lucide-react';
-import './CartPage.css';
+import { Column, DataTable } from 'components/ui/DataTable';
+import { PageHeader } from 'components/ui/PageHeader';
+import { Card } from 'components/ui/Card';
+import { Button } from 'components/ui/Button';
+import { buttonClassName } from 'components/ui/buttonClassName';
+import { EmptyState } from 'components/ui/EmptyState';
+import { Totals } from 'components/ui/Totals';
+import { QuantityStepper } from 'components/form/QuantityStepper';
 
 /**
  * Página de carrito: muestra los productos añadidos, permite ajustar cantidades,
@@ -15,16 +23,13 @@ const CartPage = () => {
 
   const selectedItems = items.filter((item) => item.selected);
   const selectedCount = selectedItems.length;
-  const selectedTotal = selectedItems.reduce(
-    (acc, item) => acc + item.unitPrice * item.quantity,
-    0,
-  );
+  const selectedTotal = selectedItems.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
+  const hasSelected = selectedCount > 0;
+  const allSelected = items.length > 0 && selectedCount === items.length;
 
-  /**
-   * Genera un Excel de orden de compra solo con los ítems seleccionados.
-   */
+  /** Genera un Excel de orden de compra solo con los ítems seleccionados. */
   const handleExportToExcel = async () => {
-    if (selectedCount === 0) {
+    if (!hasSelected) {
       toast.error('No hay productos seleccionados para exportar.');
       return;
     }
@@ -38,172 +43,142 @@ const CartPage = () => {
     }
   };
 
-  const hasItems = items.length > 0;
-  const hasSelected = selectedCount > 0;
+  const toggleAll = () => {
+    items.filter((item) => item.selected === allSelected).forEach((item) => toggleItemSelection(item.id));
+  };
+
+  if (items.length === 0) {
+    return (
+      <>
+        <PageHeader title="Carrito" />
+        <Card>
+          <EmptyState
+            icon={<ShoppingCart />}
+            title="Tu carrito está vacío"
+            description="Añade ofertas desde Productos para preparar una orden de compra."
+            action={(
+              <Link to="/" className={buttonClassName('secondary')}>
+                Continuar comprando
+                <span className="button__icon" aria-hidden="true"><ArrowRight /></span>
+              </Link>
+            )}
+          />
+        </Card>
+      </>
+    );
+  }
+
+  const columns: Column<CartItem>[] = [
+    {
+      header: (
+        <input
+          type="checkbox"
+          className="data-table__checkbox"
+          checked={allSelected}
+          ref={(el) => { if (el) el.indeterminate = hasSelected && !allSelected; }}
+          onChange={toggleAll}
+          aria-label="Seleccionar todos los productos"
+        />
+      ),
+      cell: (item) => (
+        <input
+          type="checkbox"
+          className="data-table__checkbox"
+          checked={item.selected}
+          onChange={() => toggleItemSelection(item.id)}
+          aria-label={`Incluir ${item.productName} en la orden`}
+        />
+      ),
+    },
+    {
+      header: 'Producto',
+      grow: true,
+      sortValue: (item) => item.productName,
+      cell: (item) => (
+        <>
+          <strong>{item.productName}</strong>
+          {item.mpn && <span className="data-table__secondary tabular-nums">{item.mpn}</span>}
+        </>
+      ),
+    },
+    { header: 'Proveedor', sortValue: (item) => item.supplierName, accessorKey: 'supplierName' },
+    {
+      header: 'Cantidad',
+      align: 'center',
+      cell: (item) => (
+        <QuantityStepper
+          value={item.quantity}
+          max={item.stock}
+          onChange={(quantity) => updateItemQuantity(item.id, quantity)}
+          label={`Cantidad de ${item.productName}`}
+        />
+      ),
+    },
+    { header: 'Precio unidad', numeric: true, sortValue: (item) => item.unitPrice, cell: (item) => formatCurrency(item.unitPrice) },
+    {
+      header: 'Importe',
+      numeric: true,
+      sortValue: (item) => item.unitPrice * item.quantity,
+      cell: (item) => <strong>{formatCurrency(item.unitPrice * item.quantity)}</strong>,
+    },
+    {
+      header: <span className="sr-only">Acciones</span>,
+      align: 'right',
+      cell: (item) => (
+        <Button
+          size="sm"
+          variant="ghost"
+          iconOnly
+          icon={<Trash2 />}
+          onClick={() => removeItem(item.id)}
+        >
+          {`Eliminar ${item.productName}`}
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <div className="carrito-container">
-      <div className="cart-header">
-        <div>
-          <div className="carrito-title-wrap">
-            <ShoppingCart size={24} className="carrito-title-icon" aria-hidden="true" />
-            <h1 className="carrito-title">Carrito de la Compra</h1>
-          </div>
-          <p className="cart-subtitle">Revisa cantidades, selecciona productos y exporta tu orden de compra.</p>
-        </div>
+    <>
+      <PageHeader
+        title="Carrito"
+        description="Revisa cantidades, selecciona productos y exporta la orden de compra."
+      />
 
-        {hasItems && (
-          <div className="cart-metrics">
-            <div className="cart-metric">
-              <span className="cart-metric-label">Productos totales</span>
-              <span className="cart-metric-value">{items.length}</span>
-            </div>
-            <div className="cart-metric">
-              <span className="cart-metric-label">Seleccionados</span>
-              <span className="cart-metric-value">{selectedCount}</span>
-            </div>
-            <div className="cart-metric">
-              <span className="cart-metric-label">Total seleccionado</span>
-              <span className="cart-metric-value">
-                {hasSelected ? formatCurrency(selectedTotal) : '—'}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
+      <div className="page-split">
+        <Card title={`Productos (${items.length})`} flush>
+          <DataTable
+            caption="Productos en el carrito"
+            columns={columns}
+            data={items}
+            keyExtractor={(item) => item.id}
+            rowClassName={(item) => (item.selected ? undefined : 'data-table__row--muted')}
+          />
+        </Card>
 
-      <div className={`carrito-content ${!hasItems ? 'carrito-vacio-grid' : ''}`}>
-        <div className="carrito-items">
-          {!hasItems ? (
-            <div className="carrito-vacio">
-              <p>Tu carrito está vacío.</p>
-              <Link to="/" className="seguir-comprando">
-                <ArrowRight size={16} aria-hidden="true" />
-                Continuar comprando
-              </Link>
-            </div>
-          ) : (
-            items.map((item) => (
-              <div
-                key={item.id}
-                className={`carrito-item ${!item.selected ? 'deseleccionado' : ''}`}
-              >
-                <div className="carrito-item-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={item.selected}
-                    onChange={() => toggleItemSelection(item.id)}
-                    title="Seleccionar para comprar"
-                  />
-                </div>
-                <div className="carrito-item-detalles">
-                  <h3 className="carrito-item-nombre">{item.productName}</h3>
-                  <div className="carrito-item-linea-secundaria">
-                    <p className="carrito-item-proveedor">
-                      Proveedor: {item.supplierName}
-                    </p>
-                    <div className="control-cantidad">
-                      <button
-                        onClick={() =>
-                          updateItemQuantity(item.id, item.quantity - 1)
-                        }
-                        disabled={item.quantity <= 1}
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateItemQuantity(
-                            item.id,
-                            parseInt(e.target.value, 10) || 1,
-                          )
-                        }
-                        onBlur={(e) => {
-                          if (parseInt(e.target.value, 10) < 1) {
-                            updateItemQuantity(item.id, 1);
-                          }
-                        }}
-                      />
-                      <button
-                        onClick={() =>
-                          updateItemQuantity(item.id, item.quantity + 1)
-                        }
-                        disabled={item.quantity >= item.stock}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <div className="carrito-item-precio">
-                      {formatCurrency(item.unitPrice * item.quantity)}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  className="boton-eliminar"
-                  onClick={() => removeItem(item.id)}
-                  title="Eliminar producto"
-                >
-                  <Trash2 size={18} aria-hidden="true" />
-                </button>
-              </div>
-            ))
+        <Card title="Resumen del pedido" className="page-split__aside">
+          <Totals
+            rows={[
+              { label: 'Productos seleccionados', value: `${selectedCount} de ${items.length}`, muted: true },
+              { label: 'Total del carrito', value: formatCurrency(totalPrice), muted: true },
+              { label: 'Total seleccionado', value: hasSelected ? formatCurrency(selectedTotal) : '—', total: true },
+            ]}
+          />
+          {!hasSelected && (
+            <p className="page-split__note">Marca al menos un producto para incluirlo en la orden de compra.</p>
           )}
-        </div>
-
-        {hasItems && (
-          <div className="carrito-resumen">
-            <h2 className="summary-title">
-              <FileText size={20} aria-hidden="true" />
-              Resumen del Pedido
-            </h2>
-
-            {!hasSelected ? (
-              <p className="summary-empty-message">
-                No hay productos seleccionados. Marca al menos uno para incluirlo en la
-                orden de compra.
-              </p>
-            ) : (
-              <div className="resumen-items">
-                {selectedItems.map((item) => (
-                  <div className="resumen-fila" key={item.id}>
-                    <span className="resumen-item-nombre">
-                      {item.productName}{' '}
-                      <span className="resumen-item-cantidad">
-                        (x{item.quantity})
-                      </span>
-                    </span>
-                    <span>{formatCurrency(item.unitPrice * item.quantity)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="resumen-fila total">
-              <span>Total carrito</span>
-              <span>{formatCurrency(totalPrice)}</span>
-            </div>
-
-            <button
-              className="boton-tramitar"
-              onClick={handleExportToExcel}
-              disabled={!hasSelected}
-              title={
-                hasSelected
-                  ? 'Generar y descargar un archivo Excel con los productos seleccionados'
-                  : 'Selecciona al menos un producto para poder exportar la orden de compra'
-              }
-            >
-              <Download size={18} aria-hidden="true" />
-              <span>Generar Excel</span>
-            </button>
-          </div>
-        )}
+          <Button
+            className="page-split__cta"
+            icon={<Download />}
+            onClick={handleExportToExcel}
+            disabled={!hasSelected}
+          >
+            Generar Excel
+          </Button>
+        </Card>
       </div>
-    </div>
+    </>
   );
 };
 
 export default CartPage;
-

@@ -1,0 +1,24 @@
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.delta__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.delta--good {
+  color: var(--color-status-success-text);
+}
+
+.delta--bad {
+  color: var(--color-status-error-text);
+}
+
+.delta--neutral {
+  color: var(--text-muted);
+}
