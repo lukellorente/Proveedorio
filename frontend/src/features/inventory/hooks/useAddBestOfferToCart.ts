@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { AggregatedProductDto } from 'src/types';
 import { getProductDetails } from 'features/inventory/services/productService';
-import { useCart } from 'features/cart/context/useCart';
+import { useAddOfferToCart } from './useAddOfferToCart';
 
 /**
  * Añade al carrito la oferta más barata con stock de un producto.
@@ -12,7 +12,7 @@ import { useCart } from 'features/cart/context/useCart';
  */
 export const useAddBestOfferToCart = () => {
   const queryClient = useQueryClient();
-  const { addItem } = useCart();
+  const addOffer = useAddOfferToCart();
   const [pendingId, setPendingId] = useState<number | null>(null);
 
   const addBestOffer = async (product: AggregatedProductDto) => {
@@ -32,25 +32,7 @@ export const useAddBestOfferToCart = () => {
         return;
       }
 
-      const result = addItem({
-        productId: detail.id,
-        supplierId: best.supplierId,
-        productName: `${detail.brand} ${detail.model}`,
-        supplierName: best.supplierName,
-        unitPrice: best.costPrice ?? 0,
-        quantity: 1,
-        stock: best.stock,
-        mpn: detail.mpn,
-        pvpPrice: best.retailPrice ?? undefined,
-      });
-
-      if (result.status === 'max-stock-reached') {
-        toast.error(`No puedes añadir más unidades. Stock disponible: ${result.maxQuantity}.`);
-      } else if (result.quantity >= result.maxQuantity) {
-        toast.success(`'${detail.model}' añadido (${best.supplierName}). Has alcanzado el stock disponible.`);
-      } else {
-        toast.success(`'${detail.model}' añadido a la cesta (${best.supplierName}).`);
-      }
+      addOffer(detail, best, { showSupplier: true });
     } catch {
       toast.error('No se pudo añadir el producto al carrito.');
     } finally {
