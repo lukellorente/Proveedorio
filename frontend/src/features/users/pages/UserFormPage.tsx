@@ -5,14 +5,27 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { AxiosError } from 'axios';
 import { UserRequestDto } from 'src/types';
 import { useFieldErrors } from 'src/hooks/useFieldErrors';
-import { FieldError } from 'src/components/form/FieldError';
+import { Field } from 'src/components/form/Field';
+import { PasswordInput } from 'src/components/form/PasswordInput';
+import { RadioGroup, RadioOption } from 'src/components/form/RadioGroup';
 import { FormSection } from 'src/components/form/FormSection';
 import { FormGrid } from 'src/components/form/FormGrid';
 import { FormActions } from 'src/components/form/FormActions';
-import './UserFormPage.css';
+import { PageHeader } from 'src/components/ui/PageHeader';
+import { Button } from 'src/components/ui/Button';
+import { buttonClassName } from 'src/components/ui/buttonClassName';
+import { Skeleton } from 'src/components/ui/Skeleton';
 import toast from 'react-hot-toast';
+import { ROLES, RoleId } from '../roles';
 
-const allRoles = ['ROLE_ADMIN', 'ROLE_CLIENTE'];
+type UserField = 'username' | 'email' | 'fullName' | 'password';
+
+const ROLE_OPTIONS: RadioOption<RoleId>[] = (Object.keys(ROLES) as RoleId[]).map((role) => ({
+  value: role,
+  label: ROLES[role].label,
+  description: ROLES[role].description,
+}));
+
 type BackendError = { message?: string; errors?: Record<string, string> };
 
 /**
@@ -39,8 +52,7 @@ const UserFormPage = () => {
     setFieldError,
     clearFieldError,
     clearAllErrors,
-    bindField,
-  } = useFieldErrors<'username' | 'email' | 'fullName' | 'password'>();
+  } = useFieldErrors<UserField>();
 
   const { data: existingUser, isLoading } = useQuery({
     queryKey: ['user', id],
@@ -87,7 +99,7 @@ const UserFormPage = () => {
 
       if (fieldErrors && typeof fieldErrors === 'object') {
         Object.entries(fieldErrors).forEach(([field, message]) => {
-          setFieldError(field as 'username' | 'email' | 'fullName' | 'password', String(message));
+          setFieldError(field as UserField, String(message));
         });
       } else {
         toast.error(`Error al guardar el usuario: ${typedError.response?.data?.message || typedError.message}`);
@@ -98,10 +110,10 @@ const UserFormPage = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    clearFieldError(name as 'username' | 'email' | 'fullName' | 'password');
+    clearFieldError(name as UserField);
   };
 
-  const handleRoleChange = (role: string) => {
+  const handleRoleChange = (role: RoleId) => {
     setFormData((prev) => ({ ...prev, roles: [role] }));
   };
 
@@ -115,101 +127,79 @@ const UserFormPage = () => {
   };
 
   if (isLoading && isEditMode) {
-    return <div className="p-8 text-center text-white">Cargando formulario...</div>;
+    return (
+      <div aria-busy="true">
+        <span className="sr-only" role="status">Cargando formulario...</span>
+        <Skeleton width="md" />
+      </div>
+    );
   }
 
-  return (
-    <div className="user-form-page">
-      <div className="form-container">
-        <div className="form-header">
-          <h1 className="form-title">{isEditMode ? 'Actualizar usuario' : 'Crear usuario'}</h1>
-          <Link to="/users" className="back-link">← Volver al listado</Link>
-        </div>
+  const textField = (name: UserField, label: string, options: { type?: string; required?: boolean; autoComplete?: string } = {}) => (
+    <Field id={name} label={label} required={options.required} error={errors[name]}>
+      {(control) => (
+        <input
+          {...control}
+          name={name}
+          type={options.type ?? 'text'}
+          value={formData[name] ?? ''}
+          onChange={handleInputChange}
+          required={options.required}
+          autoComplete={options.autoComplete}
+        />
+      )}
+    </Field>
+  );
 
-        <form onSubmit={handleSubmit} className="user-form">
-          <FormSection title="Información del usuario">
-            <FormGrid>
-              <div className="form-group">
-                <label htmlFor="username">Usuario</label>
-                <input
-                  id="username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  required
-                  className="form-input"
-                  {...bindField('username')}
-                />
-                <FieldError field="username" message={errors.username} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="form-input"
-                  {...bindField('email')}
-                />
-                <FieldError field="email" message={errors.email} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="fullName">Nombre completo</label>
-                <input
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName ?? ''}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  {...bindField('fullName')}
-                />
-                <FieldError field="fullName" message={errors.fullName} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="password">Contraseña</label>
-                <input
-                  id="password"
+  return (
+    <>
+      <PageHeader title={isEditMode ? 'Editar usuario' : 'Nuevo usuario'} />
+
+      <form onSubmit={handleSubmit}>
+        <FormSection title="Información del usuario">
+          <FormGrid>
+            {textField('username', 'Usuario', { required: true, autoComplete: 'off' })}
+            {textField('email', 'Email', { type: 'email', required: true, autoComplete: 'off' })}
+            {textField('fullName', 'Nombre completo')}
+            <Field
+              id="password"
+              label="Contraseña"
+              required={!isEditMode}
+              error={errors.password}
+              hint={isEditMode ? 'Déjala en blanco para conservar la actual.' : undefined}
+            >
+              {(control) => (
+                <PasswordInput
+                  {...control}
                   name="password"
-                  type="password"
                   value={formData.password ?? ''}
                   onChange={handleInputChange}
-                  placeholder={isEditMode ? 'Deja en blanco para conservar la actual' : ''}
                   required={!isEditMode}
-                  className="form-input"
-                  {...bindField('password')}
+                  autoComplete="new-password"
                 />
-                <FieldError field="password" message={errors.password} />
-              </div>
-            </FormGrid>
-          </FormSection>
+              )}
+            </Field>
+          </FormGrid>
+        </FormSection>
 
-          <FormSection title="Roles">
-            <div className="roles-checkbox-group">
-              {allRoles.map((role) => (
-                <label key={role} className="role-label">
-                  <input
-                    type="radio"
-                    name="user-role"
-                    checked={formData.roles.includes(role)}
-                    onChange={() => handleRoleChange(role)}
-                  />
-                  {role}
-                </label>
-              ))}
-            </div>
-          </FormSection>
+        <FormSection title="Permisos">
+          <RadioGroup<RoleId>
+            name="user-role"
+            legend="Rol"
+            value={formData.roles[0] as RoleId | undefined}
+            options={ROLE_OPTIONS}
+            onChange={handleRoleChange}
+          />
+        </FormSection>
 
-          <FormActions>
-            <button type="submit" disabled={mutation.isPending} className="btn-primary">
-              {mutation.isPending ? 'Guardando...' : (isEditMode ? 'Actualizar usuario' : 'Crear usuario')}
-            </button>
-          </FormActions>
-        </form>
-      </div>
-    </div>
+        <FormActions>
+          <Link to="/users" className={buttonClassName('secondary')}>Cancelar</Link>
+          <Button type="submit" loading={mutation.isPending}>
+            {mutation.isPending ? 'Guardando...' : (isEditMode ? 'Guardar cambios' : 'Crear usuario')}
+          </Button>
+        </FormActions>
+      </form>
+    </>
   );
 };
 

@@ -5,6 +5,7 @@ import { useAuth } from 'features/auth/context/AuthContext';
 import { useCart } from 'features/cart/context/useCart';
 import ErrorNotificationBell from 'features/errors/components/ErrorNotificationBell';
 import { getBreadcrumb } from './routeMeta';
+import { usePageMeta } from './usePageMeta';
 import './TopBar.css';
 
 const UserMenu = () => {
@@ -94,7 +95,8 @@ const GlobalSearch = () => {
 const TopBar = () => {
   const { pathname } = useLocation();
   const { itemCount } = useCart();
-  const crumbs = getBreadcrumb(pathname);
+  const { entityName } = usePageMeta();
+  const crumbs = getBreadcrumb(pathname, entityName);
   const current = crumbs[crumbs.length - 1];
   const parents = crumbs.slice(0, -1);
 

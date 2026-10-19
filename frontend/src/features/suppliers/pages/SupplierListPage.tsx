@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
+import { BarChart3, Plus } from 'lucide-react';
 import { getSuppliers } from '../services/supplierService';
-import { Link } from 'react-router-dom';
 import { SupplierSimpleDto } from 'src/types';
 import { useAuth } from 'features/auth/context/AuthContext';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import { PageHeader } from 'components/ui/PageHeader';
+import { buttonClassName } from 'components/ui/buttonClassName';
 
 const SupplierListPage = () => {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const { data: suppliers, isLoading, isError, refetch } = useQuery<SupplierSimpleDto[]>({
     queryKey: ['suppliers'],
@@ -15,50 +19,59 @@ const SupplierListPage = () => {
   });
 
   const columns: Column<SupplierSimpleDto>[] = [
-    { header: 'Nombre', accessorKey: 'name' },
+    { header: 'Nombre', sortValue: (s) => s.name, cell: (s) => <strong>{s.name}</strong> },
     {
-      header: 'Acciones',
+      header: <span className="sr-only">Acciones</span>,
       align: 'right',
       cell: (supplier) => (
-        <div className="actions-cell">
-          {isAdmin && (
-            <Link to={`/suppliers/${supplier.id}`} className="btn-action btn-action-edit">
-              Detalles
-            </Link>
-          )}
-          <Link to={`/suppliers/${supplier.id}/dashboard`} className="btn-action btn-action-edit">
+        <span className="data-table__actions">
+          <Link
+            to={`/suppliers/${supplier.id}/dashboard`}
+            className={buttonClassName('ghost', 'sm')}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Dashboard de ${supplier.name}`}
+          >
+            <span className="button__icon" aria-hidden="true"><BarChart3 /></span>
             Dashboard
           </Link>
-        </div>
+        </span>
       ),
     },
   ];
 
   return (
-    <div className="list-page-container">
-      <div className="page-header">
-        <h1 className="page-title">Gestión de proveedores</h1>
-        {isAdmin && (
-          <Link to="/suppliers/new" className="btn-create">
+    <>
+      <PageHeader
+        title="Proveedores"
+        description={suppliers ? `${suppliers.length} proveedores` : undefined}
+        actions={isAdmin && (
+          <Link to="/suppliers/new" className={buttonClassName('primary')}>
+            <span className="button__icon" aria-hidden="true"><Plus /></span>
             Crear proveedor
           </Link>
         )}
-      </div>
+      />
 
       <ErrorBoundary
         fallbackMessage="Error al cargar la lista de proveedores. Verifique la conexión con el servidor."
         onRetry={refetch}
       >
-          <DataTable
-            columns={columns}
-            data={suppliers || []}
-            isLoading={isLoading}
-            isError={isError}
-            loadingMessage="Cargando proveedores..."
-            keyExtractor={(supplier) => supplier.id}
-          />
+        <DataTable
+          caption="Proveedores"
+          columns={columns}
+          data={suppliers || []}
+          isLoading={isLoading}
+          isError={isError}
+          loadingMessage="Cargando proveedores..."
+          errorMessage="Error al cargar la lista de proveedores."
+          emptyMessage="No hay proveedores registrados."
+          keyExtractor={(supplier) => supplier.id}
+          onRowClick={isAdmin
+            ? (supplier) => navigate(`/suppliers/${supplier.id}`)
+            : (supplier) => navigate(`/suppliers/${supplier.id}/dashboard`)}
+        />
       </ErrorBoundary>
-    </div>
+    </>
   );
 };
 
