@@ -52,3 +52,30 @@
     padding: var(--space-4);
   }
 }
+
+/* Contenido de página: enlaces sin clase y código en línea */
+.app-shell__page a:not([class]) {
+  color: var(--brand-700);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.app-shell__page a:not([class]):hover {
+  color: var(--color-brand-title);
+}
+
+.app-shell__page a:not([class]):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.app-shell__page code {
+  padding: 0.0625rem var(--space-1);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-100);
+  color: var(--brand-800);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}

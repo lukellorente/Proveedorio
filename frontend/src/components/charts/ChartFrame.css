@@ -1,0 +1,22 @@
+.chart-frame {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Recharts dibuja un foco en el SVG al pulsar; el anillo lo pone el contenedor */
+.chart-frame .recharts-surface:focus,
+.chart-frame .recharts-wrapper:focus {
+  outline: none;
+}
+
+.chart-frame .recharts-legend-wrapper {
+  font-size: var(--font-size-xs);
+}
+
+.chart-frame .recharts-legend-item-text {
+  color: var(--text-secondary) !important;
+}
+
+.chart-frame .recharts-text {
+  font-variant-numeric: tabular-nums;
+}

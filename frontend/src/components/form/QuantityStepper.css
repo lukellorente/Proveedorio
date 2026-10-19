@@ -1,0 +1,62 @@
+.quantity-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--control-height-sm);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.quantity-stepper__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-sm);
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.quantity-stepper__button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.quantity-stepper__button:hover:not(:disabled) {
+  background-color: var(--brand-100);
+  color: var(--text-primary);
+}
+
+.quantity-stepper__button:disabled {
+  color: var(--text-muted);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-stepper__button:focus-visible,
+.quantity-stepper__input:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.quantity-stepper__input {
+  width: 3rem;
+  border: 0;
+  border-left: 1px solid var(--bg-tertiary);
+  border-right: 1px solid var(--bg-tertiary);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.quantity-stepper__input::-webkit-outer-spin-button,
+.quantity-stepper__input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}

@@ -1,14 +1,23 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUsers, deleteUser } from '../services/userService';
-import { Link } from 'react-router-dom';
-import { Badge } from '../../../components/badge/Badge';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { getUsers, deleteUser } from '../services/userService';
+import { roleLabel } from '../roles';
+import { Badge } from '../../../components/badge/Badge';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { UserDto } from 'src/types';
+import { PageHeader } from 'components/ui/PageHeader';
+import { Button } from 'components/ui/Button';
+import { buttonClassName } from 'components/ui/buttonClassName';
+import { ConfirmDialog } from 'components/ui/ConfirmDialog';
 
 const UserListPage = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [userToDelete, setUserToDelete] = useState<UserDto | null>(null);
 
   const { data: users, isLoading, isError, refetch } = useQuery({
     queryKey: ['users'],
@@ -20,67 +29,99 @@ const UserListPage = () => {
     onSuccess: () => {
       toast.success('Usuario eliminado correctamente');
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      setUserToDelete(null);
     },
     onError: () => {
       toast.error('Error al eliminar el usuario');
+      setUserToDelete(null);
     },
   });
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('¿Seguro que deseas eliminar este usuario?')) {
-      deleteUserMutation.mutate(id);
-    }
-  };
-
   const columns: Column<UserDto>[] = [
-    { header: 'Usuario', accessorKey: 'username' },
-    { header: 'Email', accessorKey: 'email' },
-    { header: 'Nombre completo', accessorKey: 'fullName' },
+    { header: 'Usuario', sortValue: (u) => u.username, cell: (u) => <strong>{u.username}</strong> },
+    { header: 'Nombre completo', sortValue: (u) => u.fullName, cell: (u) => u.fullName || '—' },
+    { header: 'Email', sortValue: (u) => u.email, accessorKey: 'email' },
     {
-      header: 'Roles',
-      cell: (user: UserDto) => (
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {user.roles.map((role: string) => (
-            <Badge key={role} variant="info">{role}</Badge>
+      header: 'Rol',
+      sortValue: (u) => u.roles.join(','),
+      cell: (u) => (
+        <span className="data-table__actions">
+          {u.roles.map((role) => (
+            <Badge key={role} variant={role === 'ROLE_ADMIN' ? 'info' : 'neutral'}>{roleLabel(role)}</Badge>
           ))}
-        </div>
+        </span>
       ),
     },
     {
-      header: 'Acciones',
+      header: <span className="sr-only">Acciones</span>,
       align: 'right',
-      cell: (user) => (
-        <div className="actions-cell">
-          <Link to={`/users/edit/${user.id}`} className="btn-action btn-action-edit">Editar</Link>
-          <button onClick={() => handleDelete(user.id)} className="btn-action btn-action-delete">Eliminar</button>
-        </div>
+      cell: (u) => (
+        <span className="data-table__actions">
+          <Link
+            to={`/users/edit/${u.id}`}
+            className={buttonClassName('ghost', 'sm')}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Editar ${u.username}`}
+          >
+            <span className="button__icon" aria-hidden="true"><Pencil /></span>
+            Editar
+          </Link>
+          <Button
+            size="sm"
+            variant="ghost"
+            iconOnly
+            icon={<Trash2 />}
+            onClick={(e) => { e.stopPropagation(); setUserToDelete(u); }}
+          >
+            {`Eliminar ${u.username}`}
+          </Button>
+        </span>
       ),
     },
   ];
 
   return (
-    <div className="list-page-container">
-      <div className="page-header">
-        <h1 className="page-title">Gestión de usuarios</h1>
-        <Link to="/users/new" className="btn-create">
-          Crear usuario
-        </Link>
-      </div>
+    <>
+      <PageHeader
+        title="Usuarios"
+        description={users ? `${users.length} usuarios` : undefined}
+        actions={(
+          <Link to="/users/new" className={buttonClassName('primary')}>
+            <span className="button__icon" aria-hidden="true"><Plus /></span>
+            Crear usuario
+          </Link>
+        )}
+      />
 
       <ErrorBoundary
         fallbackMessage="Error al cargar la lista de usuarios. Asegúrese de que el servidor está en funcionamiento."
         onRetry={refetch}
       >
         <DataTable
+          caption="Usuarios"
           columns={columns}
           data={users || []}
           isLoading={isLoading}
           isError={isError}
           loadingMessage="Cargando usuarios..."
-          keyExtractor={(user) => user.id}
+          errorMessage="Error al cargar la lista de usuarios."
+          emptyMessage="No hay usuarios registrados."
+          keyExtractor={(u) => u.id}
+          onRowClick={(u) => navigate(`/users/edit/${u.id}`)}
         />
       </ErrorBoundary>
-    </div>
+
+      <ConfirmDialog
+        open={userToDelete !== null}
+        title={`¿Eliminar a ${userToDelete?.username ?? ''}?`}
+        description="El usuario perderá el acceso de inmediato. Esta acción no se puede deshacer."
+        confirmLabel="Eliminar usuario"
+        danger
+        loading={deleteUserMutation.isPending}
+        onConfirm={() => userToDelete && deleteUserMutation.mutate(userToDelete.id)}
+        onCancel={() => setUserToDelete(null)}
+      />
+    </>
   );
 };
 

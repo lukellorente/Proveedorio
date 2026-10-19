@@ -5,6 +5,7 @@ import { CartProvider } from 'features/cart/context/CartContext';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import { useSidebarCollapsed } from './useSidebarCollapsed';
+import { PageMetaProvider } from './PageMetaProvider';
 import './AppShell.css';
 
 const AppShellContent = ({ children }: { children: ReactNode }) => {
@@ -35,7 +36,9 @@ const AppShellContent = ({ children }: { children: ReactNode }) => {
 
 const AppShell = ({ children }: { children: ReactNode }) => (
   <CartProvider>
-    <AppShellContent>{children}</AppShellContent>
+    <PageMetaProvider>
+      <AppShellContent>{children}</AppShellContent>
+    </PageMetaProvider>
   </CartProvider>
 );
 

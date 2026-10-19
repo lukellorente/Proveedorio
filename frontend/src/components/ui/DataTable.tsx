@@ -11,6 +11,8 @@ export interface Column<T> {
     align?: 'left' | 'center' | 'right';
     /** Columna numérica: alineada a la derecha y con cifras tabulares. */
     numeric?: boolean;
+    /** Columna principal que se queda con el espacio sobrante (p. ej. el nombre). */
+    grow?: boolean;
     /** Valor por el que ordenar en cliente; si existe, la cabecera es ordenable. */
     sortValue?: (item: T) => string | number | null | undefined;
     /** Clave de orden en servidor; la cabecera es ordenable si la tabla recibe onSortChange. */
@@ -39,6 +41,8 @@ interface DataTableProps<T> {
     /** Orden controlado desde fuera (p. ej. en servidor): estado actual y aviso al pulsar una cabecera. */
     sort?: ControlledSort;
     onSortChange?: (key: string) => void;
+    /** Clase extra por fila, p. ej. data-table__row--muted para filas desactivadas. */
+    rowClassName?: (item: T) => string | undefined;
 }
 
 type SortState = { index: number; direction: SortDirection } | null;
@@ -70,6 +74,7 @@ export function DataTable<T>({
     caption,
     sort: controlledSort,
     onSortChange,
+    rowClassName,
 }: DataTableProps<T>) {
     const [sort, setSort] = useState<SortState>(null);
     const isControlled = Boolean(onSortChange);
@@ -92,7 +97,7 @@ export function DataTable<T>({
 
     const alignClass = (col: Column<T>) => {
         const align = col.numeric ? 'right' : col.align || 'left';
-        return [`data-table__cell--${align}`, col.numeric ? 'tabular-nums' : ''].filter(Boolean).join(' ');
+        return [`data-table__cell--${align}`, col.numeric ? 'tabular-nums' : '', col.grow ? 'data-table__cell--grow' : ''].filter(Boolean).join(' ');
     };
 
     const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, item: T) => {
@@ -168,7 +173,7 @@ export function DataTable<T>({
                         : rows.map((item, rowIndex) => (
                             <tr
                                 key={keyExtractor(item, rowIndex)}
-                                className={onRowClick ? 'data-table__row data-table__row--clickable' : 'data-table__row'}
+                                className={['data-table__row', onRowClick ? 'data-table__row--clickable' : '', rowClassName?.(item) ?? ''].filter(Boolean).join(' ')}
                                 onClick={onRowClick ? () => onRowClick(item) : undefined}
                                 onKeyDown={onRowClick ? (event) => handleRowKeyDown(event, item) : undefined}
                                 tabIndex={onRowClick ? 0 : undefined}
