@@ -1,0 +1,54 @@
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.app-shell__skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-2);
+  z-index: calc(var(--z-overlay) + 1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--corp-institutional);
+  color: var(--text-on-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.app-shell__skip-link:focus {
+  transform: none;
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.app-shell__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-shell__main {
+  flex: 1;
+  padding: var(--space-6);
+  scroll-margin-top: var(--topbar-height);
+}
+
+.app-shell__main:focus {
+  outline: none;
+}
+
+.app-shell__page {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1023px) {
+  .app-shell__main {
+    padding: var(--space-4);
+  }
+}
