@@ -1,13 +1,38 @@
 import { useState, useMemo, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { motion, useReducedMotion } from 'motion/react';
+import { LayoutGrid, List, RotateCw, Search, SearchX, SlidersHorizontal } from 'lucide-react';
 import { getProducts, searchProducts } from 'features/inventory/services/productService';
 import ProductTable, { SortField, SortDirection } from 'features/inventory/components/ProductTable';
-import Pagination from 'features/inventory/components/Pagination';
+import ProductGrid from 'features/inventory/components/ProductGrid';
+import { useInventoryView, type InventoryView } from 'features/inventory/hooks/useInventoryView';
 import { useDebounce } from '../../../hooks/useDebounce';
-import './InventoryDashboardPage.css';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { PageHeader } from 'components/ui/PageHeader';
+import { Toolbar } from 'components/ui/Toolbar';
+import { ViewToggle } from 'components/ui/ViewToggle';
+import { Button } from 'components/ui/Button';
+import { EmptyState } from 'components/ui/EmptyState';
+import { Pagination } from 'components/ui/Pagination';
+import { SearchInput } from 'components/form/SearchInput';
+
+const PAGE_SIZE = 20;
+
+const VIEW_OPTIONS = [
+  { value: 'list' as const, label: 'Vista de tabla', icon: <List /> },
+  { value: 'grid' as const, label: 'Vista de cuadrícula', icon: <LayoutGrid /> },
+];
+
+/** Opciones de orden para la cuadrícula, que no tiene cabeceras de columna. */
+const GRID_SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'model:ASC', label: 'Modelo (A–Z)' },
+  { value: 'model:DESC', label: 'Modelo (Z–A)' },
+  { value: 'minCostPrice:ASC', label: 'Precio: menor a mayor' },
+  { value: 'minCostPrice:DESC', label: 'Precio: mayor a menor' },
+  { value: 'brand:ASC', label: 'Marca (A–Z)' },
+  { value: 'availability:ASC', label: 'Disponibilidad' },
+];
 
 const InventoryDashboardPage = () => {
   // La búsqueda global de la barra superior llega como ?q=
@@ -22,7 +47,8 @@ const InventoryDashboardPage = () => {
   const [page, setPage] = useState(0);
   const [sortBy, setSortBy] = useState<SortField>('model');
   const [direction, setDirection] = useState<SortDirection>('ASC');
-  const PAGE_SIZE = 20;
+  const [view, setView] = useInventoryView();
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     setQueryInput(urlQuery);
@@ -46,8 +72,9 @@ const InventoryDashboardPage = () => {
 
   const productsFromApi = useMemo(() => productsResponse?.content ?? [], [productsResponse?.content]);
   const totalPages = productsResponse?.totalPages ?? 0;
+  const totalElements = productsResponse?.totalElements ?? 0;
+  const isDataLoading = isLoading || isFetching;
 
-  // Handlers for search locally in this page
   const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setQuery(queryInput);
@@ -62,10 +89,7 @@ const InventoryDashboardPage = () => {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
   };
 
   const handleSort = (newSortBy: SortField) => {
@@ -78,73 +102,121 @@ const InventoryDashboardPage = () => {
     setPage(0);
   };
 
-  const isDataLoading = isLoading || isFetching;
-  const totalElements = productsResponse?.totalElements ?? 0;
+  const handleGridSort = (value: string) => {
+    const [field, dir] = value.split(':') as [SortField, SortDirection];
+    setSortBy(field);
+    setDirection(dir);
+    setPage(0);
+  };
+
+  const subtitle = isLoading
+    ? 'Cargando productos…'
+    : totalElements === 0 ? 'Sin resultados' : `${totalElements.toLocaleString('es-ES')} productos`;
+
+  // Cambio lista ↔ cuadrícula: entrada breve; con movimiento reducido, solo un fundido corto.
+  const viewMotion = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.12 } }
+    : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.22, ease: [0.2, 0, 0, 1] as const } };
+
+  const renderResults = () => {
+    if (isError) {
+      return (
+        <EmptyState
+          tone="error"
+          title="Error al conectar con el servidor."
+          description="No se pudieron cargar los productos."
+          action={<Button variant="secondary" icon={<RotateCw />} onClick={() => refetch()}>Reintentar</Button>}
+        />
+      );
+    }
+
+    if (!isDataLoading && productsFromApi.length === 0) {
+      return (
+        <EmptyState
+          icon={<SearchX />}
+          title="No hay coincidencias"
+          description="Intenta con otros términos de búsqueda o quita el filtro de especificaciones."
+        />
+      );
+    }
+
+    return view === 'grid'
+      ? <ProductGrid products={productsFromApi} isLoading={isDataLoading} />
+      : (
+        <ProductTable
+          products={productsFromApi}
+          isLoading={isDataLoading}
+          sortBy={sortBy}
+          direction={direction}
+          onSort={handleSort}
+        />
+      );
+  };
 
   return (
-    <div className="list-page-container dashboard-container">
-      <div className="page-header" style={{ marginBottom: "1rem" }}>
-        <div>
-          <h1 className="page-title">Inventario Consolidado</h1>
-          <p className="page-subtitle">
-            {totalElements === 0 ? 'Sin resultados disponibles' : `${totalElements} productos localizados`}
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader title="Inventario consolidado" description={subtitle} />
 
-      <div className="dashboard-table-section" style={{ marginBottom: "1.5rem" }}>
-        <div className="table-search-container">
-          <form className="search-inputs-row" onSubmit={handleSearchSubmit}>
-            <div className="search-input-wrapper primary-search">
-              <Search size={16} className="search-input-icon" aria-hidden="true" />
-              <input
-                type="text"
-                placeholder="Buscar por Modelo, Marca, MPN..."
-                className="search-input"
-                value={queryInput}
-                onChange={(e) => setQueryInput(e.target.value)}
-              />
-            </div>
-            <div className="search-input-wrapper secondary-search">
-              <SlidersHorizontal size={16} className="search-input-icon" aria-hidden="true" />
-              <input
-                type="text"
-                placeholder="Filtrar Specs (ej: 'ram:8gb' o 'rojo')"
-                className="search-input"
-                value={specsInput}
-                onChange={handleSpecsChange}
-              />
-            </div>
-            <button type="submit" className="search-button">
-              <Search size={16} aria-hidden="true" />
-              Buscar
-            </button>
-          </form>
-        </div>
-
-        <ErrorBoundary fallbackMessage="Error al cargar los productos." onRetry={refetch}>
-          {isError ? (
-            <div className="table-message-center" style={{ color: 'var(--color-danger)' }}>Error al conectar con el servidor.</div>
-          ) : (
-            <ProductTable
-              products={productsFromApi}
-              isLoading={isDataLoading}
-              sortBy={sortBy}
-              direction={direction}
-              onSort={handleSort}
+      <Toolbar
+        end={(
+          <>
+            {view === 'grid' && (
+              <label className="toolbar__label">
+                Ordenar
+                <select
+                  className="toolbar__select"
+                  value={`${sortBy}:${direction}`}
+                  onChange={(e) => handleGridSort(e.target.value)}
+                >
+                  {!GRID_SORT_OPTIONS.some((o) => o.value === `${sortBy}:${direction}`) && (
+                    <option value={`${sortBy}:${direction}`}>Personalizado</option>
+                  )}
+                  {GRID_SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <ViewToggle<InventoryView>
+              label="Vista de productos"
+              value={view}
+              options={VIEW_OPTIONS}
+              onChange={setView}
             />
-          )}
-        </ErrorBoundary>
-      </div>
+          </>
+        )}
+      >
+        <form className="toolbar__start" role="search" onSubmit={handleSearchSubmit}>
+          <SearchInput
+            id="inventory-search"
+            label="Buscar por modelo, marca o MPN"
+            placeholder="Buscar por modelo, marca, MPN..."
+            value={queryInput}
+            onChange={(e) => setQueryInput(e.target.value)}
+            grow
+          />
+          <SearchInput
+            id="inventory-specs"
+            label="Filtrar por especificaciones"
+            placeholder="Filtrar specs (ej: ram:8gb o rojo)"
+            icon={<SlidersHorizontal />}
+            value={specsInput}
+            onChange={handleSpecsChange}
+          />
+          <Button type="submit" icon={<Search />}>Buscar</Button>
+        </form>
+      </Toolbar>
+
+      <ErrorBoundary fallbackMessage="Error al cargar los productos." onRetry={refetch}>
+        <motion.div key={view} {...viewMotion}>
+          {renderResults()}
+        </motion.div>
+      </ErrorBoundary>
 
       {totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
+        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
-    </div>
+    </>
   );
 };
 

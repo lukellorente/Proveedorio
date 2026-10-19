@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { motion, useReducedMotion } from 'motion/react';
 import { CartProvider } from 'features/cart/context/CartContext';
 import Sidebar from './Sidebar';
@@ -21,7 +20,6 @@ const AppShellContent = ({ children }: { children: ReactNode }) => {
   return (
     <div className="app-shell">
       <a href="#main-content" className="app-shell__skip-link">Saltar al contenido</a>
-      <Toaster position="top-right" />
       <Sidebar collapsed={collapsed} onToggle={toggle} />
       <div className="app-shell__body">
         <TopBar />

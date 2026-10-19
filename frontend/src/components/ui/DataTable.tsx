@@ -11,8 +11,17 @@ export interface Column<T> {
     align?: 'left' | 'center' | 'right';
     /** Columna numérica: alineada a la derecha y con cifras tabulares. */
     numeric?: boolean;
-    /** Valor por el que ordenar; si existe, la cabecera es ordenable. */
+    /** Valor por el que ordenar en cliente; si existe, la cabecera es ordenable. */
     sortValue?: (item: T) => string | number | null | undefined;
+    /** Clave de orden en servidor; la cabecera es ordenable si la tabla recibe onSortChange. */
+    sortKey?: string;
+}
+
+export type SortDirection = 'ascending' | 'descending';
+
+export interface ControlledSort {
+    key: string;
+    direction: SortDirection;
 }
 
 interface DataTableProps<T> {
@@ -27,9 +36,12 @@ interface DataTableProps<T> {
     keyExtractor: (item: T, index: number) => string | number;
     /** Nombre accesible de la tabla. */
     caption?: string;
+    /** Orden controlado desde fuera (p. ej. en servidor): estado actual y aviso al pulsar una cabecera. */
+    sort?: ControlledSort;
+    onSortChange?: (key: string) => void;
 }
 
-type SortState = { index: number; direction: 'ascending' | 'descending' } | null;
+type SortState = { index: number; direction: SortDirection } | null;
 
 const SKELETON_ROWS = 6;
 
@@ -56,16 +68,19 @@ export function DataTable<T>({
     onRowClick,
     keyExtractor,
     caption,
+    sort: controlledSort,
+    onSortChange,
 }: DataTableProps<T>) {
     const [sort, setSort] = useState<SortState>(null);
+    const isControlled = Boolean(onSortChange);
 
     const rows = useMemo(() => {
-        if (!sort || !data) return data;
+        if (isControlled || !sort || !data) return data;
         const getValue = columns[sort.index]?.sortValue;
         if (!getValue) return data;
         const sorted = [...data].sort((a, b) => compare(getValue(a), getValue(b)));
         return sort.direction === 'descending' ? sorted.reverse() : sorted;
-    }, [data, sort, columns]);
+    }, [data, sort, columns, isControlled]);
 
     const toggleSort = (index: number) => {
         setSort((current) => {
@@ -111,8 +126,10 @@ export function DataTable<T>({
                 <thead className="data-table__head">
                     <tr>
                         {columns.map((col, index) => {
-                            const sortable = Boolean(col.sortValue);
-                            const direction = sort?.index === index ? sort.direction : undefined;
+                            const sortable = isControlled ? Boolean(col.sortKey) : Boolean(col.sortValue);
+                            const direction = isControlled
+                                ? (col.sortKey && controlledSort?.key === col.sortKey ? controlledSort.direction : undefined)
+                                : (sort?.index === index ? sort.direction : undefined);
                             const SortIcon = direction === 'ascending' ? ArrowUp : direction === 'descending' ? ArrowDown : ArrowUpDown;
                             return (
                                 <th
@@ -122,7 +139,7 @@ export function DataTable<T>({
                                     aria-sort={sortable ? direction ?? 'none' : undefined}
                                 >
                                     {sortable ? (
-                                        <button type="button" className="data-table__sort" onClick={() => toggleSort(index)}>
+                                        <button type="button" className="data-table__sort" onClick={() => (isControlled && col.sortKey ? onSortChange?.(col.sortKey) : toggleSort(index))}>
                                             {col.header}
                                             <SortIcon
                                                 className={direction ? 'data-table__sort-icon data-table__sort-icon--active' : 'data-table__sort-icon'}
