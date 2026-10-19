@@ -10,15 +10,47 @@ import {
   deleteSupplierMapping
 } from '../services/supplierService';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import type { AxiosError } from 'axios';
 import { SupplierRequestDto, SupplierMappingRequestDto } from 'src/types';
 import { useFieldErrors } from 'src/hooks/useFieldErrors';
-import { FieldError } from 'src/components/form/FieldError';
+import { Field } from 'src/components/form/Field';
+import { Checkbox } from 'src/components/form/Checkbox';
+import { PasswordInput } from 'src/components/form/PasswordInput';
 import { FormSection } from 'src/components/form/FormSection';
 import { FormGrid } from 'src/components/form/FormGrid';
 import { FormActions } from 'src/components/form/FormActions';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import './SupplierFormPage.css';
+import { PageHeader } from 'src/components/ui/PageHeader';
+import { Button } from 'src/components/ui/Button';
+import { buttonClassName } from 'src/components/ui/buttonClassName';
+import { Skeleton } from 'src/components/ui/Skeleton';
+import { useEntityName } from 'src/components/layout/usePageMeta';
+import { MappingEditor, type EditableMapping } from '../components/MappingEditor';
+
+type SupplierField = 'name' | 'baseUrlApi' | 'contact' | 'email' | 'schedule' | 'catalogEndpoint' | 'detailEndpoint' | 'searchEndpoint';
+
+interface TextFieldDef {
+  name: SupplierField;
+  label: string;
+  placeholder: string;
+  type?: string;
+  required?: boolean;
+}
+
+/** Campos de texto del formulario, en orden de presentación. */
+const GENERAL_FIELDS: TextFieldDef[] = [
+  { name: 'name', label: 'Nombre', placeholder: 'Nombre del proveedor', required: true },
+  { name: 'contact', label: 'Contacto', placeholder: 'Nombre de contacto' },
+  { name: 'email', label: 'Email', placeholder: 'contacto@proveedor.com', type: 'email' },
+  { name: 'schedule', label: 'Horario', placeholder: 'L-V 09:00-18:00' },
+];
+
+const API_FIELDS: TextFieldDef[] = [
+  { name: 'baseUrlApi', label: 'API base URL', placeholder: 'https://api.supplier.com', required: true },
+  { name: 'catalogEndpoint', label: 'Endpoint de catálogo', placeholder: '/catalog' },
+  { name: 'detailEndpoint', label: 'Endpoint de detalle', placeholder: '/products/{id}' },
+  { name: 'searchEndpoint', label: 'Endpoint de búsqueda', placeholder: '/search' },
+];
 
 /**
  * Página de formulario para crear o editar un proveedor y sus reglas de mapeo.
@@ -46,7 +78,7 @@ const SupplierFormPage = () => {
     searchEndpoint: '',
   });
 
-  const [mappings, setMappings] = useState<Array<Partial<SupplierMappingRequestDto> & { mappingId?: number }>>([]);
+  const [mappings, setMappings] = useState<EditableMapping[]>([]);
   const [mappingsToDelete, setMappingsToDelete] = useState<number[]>([]);
 
   const { data: existingSupplier, isLoading: isLoadingSupplier } = useQuery({
@@ -66,8 +98,9 @@ const SupplierFormPage = () => {
     setFieldError,
     clearFieldError,
     clearAllErrors,
-    bindField,
-  } = useFieldErrors<'name' | 'baseUrlApi' | 'contact' | 'email' | 'schedule' | 'catalogEndpoint' | 'detailEndpoint' | 'searchEndpoint'>();
+  } = useFieldErrors<SupplierField>();
+
+  useEntityName(isEditMode ? existingSupplier?.name : undefined);
 
   useEffect(() => {
     if (isEditMode && existingSupplier) {
@@ -119,7 +152,7 @@ const SupplierFormPage = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    clearFieldError(name as 'name' | 'baseUrlApi' | 'contact' | 'email' | 'schedule' | 'catalogEndpoint' | 'detailEndpoint' | 'searchEndpoint');
+    clearFieldError(name as SupplierField);
   };
 
   const handleMappingChange = (index: number, field: keyof SupplierMappingRequestDto, value: string) => {
@@ -193,6 +226,7 @@ const SupplierFormPage = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier', currentSupplierId] });
       queryClient.invalidateQueries({ queryKey: ['supplierMappings', currentSupplierId] });
 
+      toast.success(isEditMode ? 'Proveedor actualizado.' : 'Proveedor creado.');
       navigate(isEditMode ? `/suppliers/${currentSupplierId}` : '/suppliers');
 
     } catch (error) {
@@ -201,9 +235,10 @@ const SupplierFormPage = () => {
 
       if (fieldErrors && typeof fieldErrors === 'object') {
         Object.entries(fieldErrors).forEach(([field, message]) => {
-          setFieldError(field as 'name' | 'baseUrlApi' | 'contact' | 'email' | 'schedule' | 'catalogEndpoint' | 'detailEndpoint' | 'searchEndpoint', String(message));
+          setFieldError(field as SupplierField, String(message));
         });
       }
+      toast.error(fieldErrors ? 'Revisa los campos marcados.' : 'No se pudo guardar el proveedor.');
       // Además dejamos rastro en consola para depuración.
       console.error('Failed to save supplier and mappings', typedError);
     }
@@ -217,195 +252,92 @@ const SupplierFormPage = () => {
     mappingDeleteMutation.isPending;
 
   if ((isLoadingSupplier || isLoadingMappings) && isEditMode) {
-    return <div className="p-8 text-center text-white">Cargando formulario...</div>;
+    return (
+      <div aria-busy="true">
+        <span className="sr-only" role="status">Cargando formulario...</span>
+        <Skeleton width="md" />
+      </div>
+    );
   }
 
-  return (
-    <div className="supplier-form-page">
-      <div className="form-container">
-        <div className="form-header">
-          <h1 className="form-title">{isEditMode ? 'Actualizar proveedor' : 'Crear proveedor'}</h1>
-          <Link to={isEditMode ? `/suppliers/${id}` : '/suppliers'} className="back-link">
-            <ArrowLeft size={16} aria-hidden="true" />
-            Volver
-          </Link>
-        </div>
+  const textField = (field: TextFieldDef) => (
+    <Field key={field.name} id={field.name} label={field.label} required={field.required} error={errors[field.name]}>
+      {(control) => (
+        <input
+          {...control}
+          name={field.name}
+          type={field.type ?? 'text'}
+          value={(formData[field.name] as string | undefined) ?? ''}
+          onChange={handleInputChange}
+          placeholder={field.placeholder}
+          required={field.required}
+        />
+      )}
+    </Field>
+  );
 
-        <form onSubmit={handleSubmit} className="supplier-form">
-          <FormSection title="Información general">
-            <FormGrid>
-               <div className="form-group">
-                <label htmlFor="name">Nombre</label>
-                <input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Nombre del proveedor"
-                  required
-                  className="form-input"
-                  {...bindField('name')}
-                />
-                <FieldError field="name" message={errors.name} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="baseUrlApi">API Base URL</label>
-                <input
-                  id="baseUrlApi"
-                  name="baseUrlApi"
-                  value={formData.baseUrlApi}
-                  onChange={handleInputChange}
-                  placeholder="https://api.supplier.com"
-                  required
-                  className="form-input"
-                  {...bindField('baseUrlApi')}
-                />
-                <FieldError field="baseUrlApi" message={errors.baseUrlApi} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="contact">Contacto</label>
-                <input
-                  id="contact"
-                  name="contact"
-                  value={formData.contact ?? ''}
-                  onChange={handleInputChange}
-                  placeholder="Nombre de contacto"
-                  className="form-input"
-                  {...bindField('contact')}
-                />
-                <FieldError field="contact" message={errors.contact} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email ?? ''}
-                  onChange={handleInputChange}
-                  placeholder="contacto@proveedor.com"
-                  className="form-input"
-                  {...bindField('email')}
-                />
-                <FieldError field="email" message={errors.email} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="schedule">Horario</label>
-                <input
-                  id="schedule"
-                  name="schedule"
-                  value={formData.schedule ?? ''}
-                  onChange={handleInputChange}
-                  placeholder="L-V 09:00-18:00"
-                  className="form-input"
-                  {...bindField('schedule')}
-                />
-                <FieldError field="schedule" message={errors.schedule} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="apiKey">API Key</label>
-                <input
-                  id="apiKey"
+  const cancelTo = isEditMode ? `/suppliers/${id}` : '/suppliers';
+
+  return (
+    <>
+      <PageHeader title={isEditMode ? 'Editar proveedor' : 'Nuevo proveedor'} />
+
+      <form onSubmit={handleSubmit}>
+        <FormSection title="Información general">
+          <FormGrid>
+            {GENERAL_FIELDS.map(textField)}
+            <div className="form-grid__full">
+              <Checkbox id="active" name="active" label="Proveedor activo" checked={formData.active} onChange={handleInputChange} />
+            </div>
+          </FormGrid>
+        </FormSection>
+
+        <FormSection title="Integración API">
+          <FormGrid>
+            {API_FIELDS.map(textField)}
+            <Field id="apiKey" label="API key" hint={isEditMode ? 'Déjala en blanco para no modificarla.' : undefined}>
+              {(control) => (
+                <PasswordInput
+                  {...control}
                   name="apiKey"
-                  type="password"
                   value={formData.apiKey}
                   onChange={handleInputChange}
-                  placeholder="Dejar en blanco para no modificar"
-                  className="form-input"
+                  autoComplete="new-password"
                 />
-              </div>
-              <div className="form-group">
-                <label htmlFor="catalogEndpoint">Catalog Endpoint</label>
-                <input
-                  id="catalogEndpoint"
-                  name="catalogEndpoint"
-                  value={formData.catalogEndpoint}
-                  onChange={handleInputChange}
-                  placeholder="/catalog"
-                  className="form-input"
-                  {...bindField('catalogEndpoint')}
-                />
-                <FieldError field="catalogEndpoint" message={errors.catalogEndpoint} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="detailEndpoint">Detail Endpoint</label>
-                <input
-                  id="detailEndpoint"
-                  name="detailEndpoint"
-                  value={formData.detailEndpoint}
-                  onChange={handleInputChange}
-                  placeholder="/products/{id}"
-                  className="form-input"
-                  {...bindField('detailEndpoint')}
-                />
-                <FieldError field="detailEndpoint" message={errors.detailEndpoint} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="searchEndpoint">Search Endpoint</label>
-                <input
-                  id="searchEndpoint"
-                  name="searchEndpoint"
-                  value={formData.searchEndpoint}
-                  onChange={handleInputChange}
-                  placeholder="/search"
-                  className="form-input"
-                  {...bindField('searchEndpoint')}
-                />
-                <FieldError field="searchEndpoint" message={errors.searchEndpoint} />
-              </div>
-              <div className="form-group checkbox-group">
-                <label>
-                  <input name="active" type="checkbox" checked={formData.active} onChange={handleInputChange} />
-                  Activo
-                </label>
-              </div>
-              <div className="form-group checkbox-group">
-                <label>
-                  <input name="supportsBulkSync" type="checkbox" checked={formData.supportsBulkSync} onChange={handleInputChange} />
-                  Soporta sincronización masiva
-                </label>
-              </div>
-            </FormGrid>
-          </FormSection>
-
-          <FormSection title="Mappings">
-            <div className="section-controls">
-              <button type="button" onClick={handleAddMapping} className="btn-add-mapping">
-                <Plus size={16} aria-hidden="true" />
-                Añadir mapping
-              </button>
-            </div>
-
-            <div className="mappings-list">
-              {mappings.map((mapping, index) => (
-                <div key={mapping.mappingId || `new-${index}`} className="mapping-item">
-                  <input value={mapping.internalField ?? ''} onChange={(e) => handleMappingChange(index, 'internalField', e.target.value)} placeholder="Internal Field" className="form-input" />
-                  <input value={mapping.externalField ?? ''} onChange={(e) => handleMappingChange(index, 'externalField', e.target.value)} placeholder="External Field" className="form-input" />
-                  <select value={mapping.transformationType ?? ''} onChange={(e) => handleMappingChange(index, 'transformationType', e.target.value)} className="form-select">
-                    <option value="DIRECT">DIRECT</option>
-                    <option value="NESTED">NESTED</option>
-                    <option value="FIND_IN_ARRAY">FIND_IN_ARRAY</option>
-                    <option value="SPLIT">SPLIT</option>
-                  </select>
-                  <button type="button" onClick={() => handleRemoveMapping(index)} className="btn-icon-delete" title="Eliminar">
-                    <Trash2 size={18} aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-              {mappings.length === 0 && (
-                <div className="no-mappings-message">No hay mappings definidos. Haz clic en &quot;Añadir mapping&quot; para crear uno.</div>
               )}
+            </Field>
+            <div className="form-grid__full">
+              <Checkbox
+                id="supportsBulkSync"
+                name="supportsBulkSync"
+                label="Soporta sincronización masiva"
+                checked={formData.supportsBulkSync}
+                onChange={handleInputChange}
+              />
             </div>
-          </FormSection>
+          </FormGrid>
+        </FormSection>
 
-          <FormActions>
-            <button type="submit" disabled={isProcessing} className="btn-primary">
-              {isProcessing ? 'Guardando...' : (isEditMode ? 'Actualizar proveedor' : 'Crear proveedor')}
-            </button>
-          </FormActions>
-        </form>
-      </div>
-    </div>
+        <FormSection
+          title="Mappings"
+          description="Traducen los campos de la API del proveedor a los campos internos del sistema."
+        >
+          <MappingEditor
+            mappings={mappings}
+            onChange={handleMappingChange}
+            onAdd={handleAddMapping}
+            onRemove={handleRemoveMapping}
+          />
+        </FormSection>
+
+        <FormActions>
+          <Link to={cancelTo} className={buttonClassName('secondary')}>Cancelar</Link>
+          <Button type="submit" loading={isProcessing}>
+            {isProcessing ? 'Guardando...' : (isEditMode ? 'Guardar cambios' : 'Crear proveedor')}
+          </Button>
+        </FormActions>
+      </form>
+    </>
   );
 };
 

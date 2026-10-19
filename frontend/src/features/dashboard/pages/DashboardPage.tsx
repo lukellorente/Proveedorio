@@ -1,224 +1,99 @@
 import { useQuery } from '@tanstack/react-query';
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import toast from 'react-hot-toast';
+import { Building2, CircleCheck, CircleSlash, Download, ExternalLink, Gauge, Package, TriangleAlert } from 'lucide-react';
 import { getDashboardSummary } from '../services/dashboardService';
 import { getSupplierHealth } from '../services/supplierHealthService';
-import { ChartDataDto, SyncHistoryDto, ProviderStatusDto, SupplierHealthDto } from 'src/types';
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Legend
-} from 'recharts';
-import toast from 'react-hot-toast';
+import { ProviderStatusDto, SupplierHealthDto, SyncHistoryDto } from 'src/types';
 import api from 'services/api';
 import { useAuth } from 'features/auth/context/AuthContext';
 import { GRAFANA_DASHBOARD_URL, PROMETHEUS_DASHBOARD_URL } from 'src/constants/links';
-import { Building2, Download, ExternalLink, Gauge, LayoutDashboard, Package, ShieldCheck, TriangleAlert } from 'lucide-react';
-import './DashboardPage.css';
-
-// --- Reusable Components ---
-
-const KpiCard = ({
-  title,
-  value,
-  unit = '',
-  icon,
-  iconClass = 'icon-blue',
-}: {
-  title: string;
-  value: string | number;
-  unit?: string;
-  icon?: React.ReactNode;
-  iconClass?: string;
-}) => (
-  <div className="dashboard-card kpi-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-    {icon && <div className={`kpi-icon ${iconClass}`}>{icon}</div>}
-    <p className="kpi-info-title">{title}</p>
-    <p className="kpi-info-value">{value}{unit && <span className="text-sm font-normal">{unit}</span>}</p>
-  </div>
-);
-
-const SemaphoreCard = ({ label, value, colorClass }: { label: string; value: number; colorClass: string; }) => (
-  <div className={`semaphore-card ${colorClass}`}>
-    <div>
-      <div className="semaphore-value">{value}</div>
-      <div className="semaphore-label">{label}</div>
-    </div>
-  </div>
-);
-
-const ChartCard = ({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) => (
-  <div className={`dashboard-card ${className || ''}`}>
-    <h3 className="card-title">{title}</h3>
-    {children}
-  </div>
-);
-
-// --- Child Components ---
+import { formatNumber } from '@/utils/formatting';
+import { PageHeader } from 'components/ui/PageHeader';
+import { Card } from 'components/ui/Card';
+import { Button } from 'components/ui/Button';
+import { buttonClassName } from 'components/ui/buttonClassName';
+import { Alert } from 'components/ui/Alert';
+import { Badge } from 'components/badge/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { Skeleton } from 'components/ui/Skeleton';
+import { StatGrid, StatTile } from 'components/ui/StatTile';
+import { Reveal } from 'components/ui/Reveal';
+import { Column, DataTable } from 'components/ui/DataTable';
+import { HorizontalBarChart } from 'components/charts/HorizontalBarChart';
+import { ChartFrame } from 'components/charts/ChartFrame';
+import { ChartTooltip } from 'components/charts/ChartTooltip';
+import { AXIS_PROPS, CHART_HIGHLIGHT, GRID_PROPS, seriesColor, shortDate, CHART_ANIMATION_MS } from 'components/charts/chartTheme';
+import { useChartAnimation } from 'components/charts/useChartAnimation';
 
 const SystemStatus = ({ failedProviders }: { failedProviders?: ProviderStatusDto[] }) => {
   if (!failedProviders) return null;
-  const hasFailed = failedProviders.length > 0;
 
-  if (hasFailed) {
+  if (failedProviders.length > 0) {
     return (
-      <div className="system-status-alert error">
-        <p className="status-alert-title">
-          <TriangleAlert size={16} aria-hidden="true" />
-          Atención: Se han detectado problemas de conexión con las siguientes tiendas:
-        </p>
+      <Alert tone="error" title="Problemas de conexión con algunas tiendas">
         <ul>
-          {failedProviders.map(provider => (
-            <li key={provider.id}>
-              <strong>{provider.name}</strong>: {provider.lastError}
-            </li>
+          {failedProviders.map((provider) => (
+            <li key={provider.id}><strong>{provider.name}</strong>: {provider.lastError}</li>
           ))}
         </ul>
-      </div>
+      </Alert>
     );
   }
 
-  return (
-    <div className="system-status-alert success">
-      <p>Consultas realizadas con éxito a todas las tiendas</p>
-    </div>
-  );
+  return <Alert tone="success" title="Consultas realizadas con éxito a todas las tiendas" />;
 };
 
-const SyncAreaChart = ({ data }: { data: SyncHistoryDto[] }) => (
-  <div style={{ height: '250px', width: '100%' }}>
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Area
-          type="monotone"
-          dataKey="successCount"
-          stackId="1"
-          stroke="#10b981"
-          fill="#10b981"
-          fillOpacity={0.6}
-          name="Éxitos"
-        />
-        <Area
-          type="monotone"
-          dataKey="errorCount"
-          stackId="1"
-          stroke="#ef4444"
-          fill="#ef4444"
-          fillOpacity={0.6}
-          name="Errores"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  </div>
-);
+/** Sincronizaciones por día: éxitos y errores apilados. Los errores van en el rojo de alerta. */
+const SyncHistoryChart = ({ data }: { data: SyncHistoryDto[] }) => {
+  const animate = useChartAnimation();
+  const errors = data.reduce((sum, d) => sum + d.errorCount, 0);
+  const total = data.reduce((sum, d) => sum + d.successCount + d.errorCount, 0);
 
-const BrandPieChart = ({ data }: { data: ChartDataDto[] }) => {
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
   return (
-    <div style={{ height: '300px', width: '100%' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={data} dataKey="value" nameKey="label" cx="50%" cy="50%" innerRadius={60} outerRadius={80} fill="#8884d8" paddingAngle={5}>
-            {data.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+    <ChartFrame label={`Sincronizaciones de los últimos 7 días: ${formatNumber(total)} en total, ${formatNumber(errors)} con error`}>
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap="30%">
+          <CartesianGrid {...GRID_PROPS} />
+          <XAxis dataKey="date" tickFormatter={shortDate} {...AXIS_PROPS} />
+          <YAxis allowDecimals={false} width={40} {...AXIS_PROPS} axisLine={false} />
+          <Tooltip cursor={{ fill: 'var(--brand-100)' }} content={<ChartTooltip formatValue={(v) => formatNumber(v)} formatLabel={(l) => shortDate(l)} />} />
+          <Legend iconType="circle" iconSize={8} itemSorter={null} />
+          <Bar dataKey="successCount" name="Éxitos" stackId="sync" fill={seriesColor(0)} isAnimationActive={animate} animationDuration={CHART_ANIMATION_MS} />
+          <Bar dataKey="errorCount" name="Errores" stackId="sync" fill={CHART_HIGHLIGHT} radius={[3, 3, 0, 0]} isAnimationActive={animate} animationDuration={CHART_ANIMATION_MS} />
+        </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartFrame>
   );
 };
 
-const StockBarChart = ({ data }: { data: ChartDataDto[] }) => (
-  <div style={{ height: '300px', width: '100%' }}>
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis type="number" />
-        <YAxis dataKey="label" type="category" width={80} />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="value" fill="#3b82f6" name="Stock" />
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
+const GRADE_VARIANT = { A: 'success', B: 'info', C: 'warning', D: 'error' } as const;
+const pct = (v: number) => `${v.toFixed(1).replace('.', ',')} %`;
+
+const healthColumns: Column<SupplierHealthDto>[] = [
+  { header: 'Proveedor', grow: true, sortValue: (r) => r.supplierName, cell: (r) => <strong>{r.supplierName}</strong> },
+  { header: 'SLA', numeric: true, sortValue: (r) => r.slaScore, cell: (r) => <strong>{r.slaScore.toFixed(1).replace('.', ',')}</strong> },
+  { header: 'Nota', align: 'center', sortValue: (r) => r.slaGrade, cell: (r) => <Badge variant={GRADE_VARIANT[r.slaGrade] ?? 'neutral'}>{r.slaGrade}</Badge> },
+  { header: 'Éxito sync', numeric: true, sortValue: (r) => r.syncSuccessRate, cell: (r) => pct(r.syncSuccessRate) },
+  { header: 'Latencia media', numeric: true, sortValue: (r) => r.avgLatencyMs, cell: (r) => (r.avgLatencyMs > 0 ? `${formatNumber(r.avgLatencyMs)} ms` : '—') },
+  { header: 'Ítems/sync', numeric: true, sortValue: (r) => r.avgItemsPerSync, cell: (r) => (r.avgItemsPerSync > 0 ? formatNumber(Math.round(r.avgItemsPerSync)) : '—') },
+  { header: 'Errores API', numeric: true, sortValue: (r) => r.apiErrorRate, cell: (r) => pct(r.apiErrorRate) },
+  { header: 'Obsoletos', numeric: true, sortValue: (r) => r.staleRate, cell: (r) => pct(r.staleRate) },
+];
+
+const ExternalLinkButton = ({ href, children }: { href: string; children: string }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className={buttonClassName('ghost')}>
+    <span className="button__icon" aria-hidden="true"><ExternalLink /></span>
+    {children}
+    <span className="sr-only"> (se abre en una pestaña nueva)</span>
+  </a>
 );
-
-// --- Supplier Health Section ---
-
-const SlaGradeBadge = ({ grade }: { grade: string }) => {
-  const colors: Record<string, string> = { A: '#10b981', B: '#3b82f6', C: '#f59e0b', D: '#ef4444' };
-  const bg = colors[grade] || '#6b7280';
-  return (
-    <span style={{
-      display: 'inline-block', padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem',
-      fontWeight: 700, color: '#fff', backgroundColor: bg,
-    }}>
-      {grade}
-    </span>
-  );
-};
-
-const SupplierHealthSection = ({ data }: { data: SupplierHealthDto[] }) => (
-  <div className="dashboard-card" style={{ overflowX: 'auto' }}>
-    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <ShieldCheck size={18} />
-      Salud de Proveedores (Supplier Health KPIs)
-    </h3>
-    {data.length === 0 ? (
-      <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-        No hay datos de sincronización aún. Los KPIs se poblarán tras la primera sincronización.
-      </p>
-    ) : (
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-            <th style={{ textAlign: 'left', padding: '8px' }}>Proveedor</th>
-            <th style={{ textAlign: 'center', padding: '8px' }}>SLA Score</th>
-            <th style={{ textAlign: 'center', padding: '8px' }}>Grade</th>
-            <th style={{ textAlign: 'center', padding: '8px' }}>Éxito Sync %</th>
-            <th style={{ textAlign: 'center', padding: '8px' }}>Latencia Avg</th>
-            <th style={{ textAlign: 'center', padding: '8px' }}>Items/Sync</th>
-            <th style={{ textAlign: 'center', padding: '8px' }}>Errores API %</th>
-            <th style={{ textAlign: 'center', padding: '8px' }}>Stale Rate %</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.supplierId} style={{ borderBottom: '1px solid #f3f4f6' }}>
-              <td style={{ padding: '8px', fontWeight: 500 }}>{row.supplierName}</td>
-              <td style={{ textAlign: 'center', padding: '8px', fontWeight: 700 }}>
-                {row.slaScore.toFixed(1)}
-              </td>
-              <td style={{ textAlign: 'center', padding: '8px' }}>
-                <SlaGradeBadge grade={row.slaGrade} />
-              </td>
-              <td style={{ textAlign: 'center', padding: '8px' }}>{row.syncSuccessRate.toFixed(1)}%</td>
-              <td style={{ textAlign: 'center', padding: '8px' }}>
-                {row.avgLatencyMs > 0 ? `${row.avgLatencyMs} ms` : '—'}
-              </td>
-              <td style={{ textAlign: 'center', padding: '8px' }}>
-                {row.avgItemsPerSync > 0 ? row.avgItemsPerSync.toFixed(0) : '—'}
-              </td>
-              <td style={{ textAlign: 'center', padding: '8px' }}>{row.apiErrorRate.toFixed(1)}%</td>
-              <td style={{ textAlign: 'center', padding: '8px' }}>{row.staleRate.toFixed(1)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    )}
-  </div>
-);
-
-// --- Main Dashboard Page Component ---
 
 const DashboardPage = () => {
   const { isAdmin, roles } = useAuth();
   const isCliente = roles.includes('ROLE_CLIENTE');
 
-  const { data: summary, isLoading, error } = useQuery({
+  const { data: summary, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboardSummary'],
     queryFn: getDashboardSummary,
   });
@@ -231,11 +106,9 @@ const DashboardPage = () => {
   });
 
   const handleExport = async () => {
-    toast.loading('Exportando datos...');
+    const toastId = toast.loading('Exportando datos...');
     try {
-      const response = await api.get('/dashboard/export/csv', {
-        responseType: 'blob'
-      });
+      const response = await api.get('/dashboard/export/csv', { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -243,102 +116,137 @@ const DashboardPage = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.dismiss();
-      toast.success('Datos exportados con éxito.');
-    } catch (error) {
-      toast.dismiss();
-      toast.error('Error al exportar los datos.');
-      console.error("Error exportando datos", error);
+      window.URL.revokeObjectURL(url);
+      toast.success('Datos exportados con éxito.', { id: toastId });
+    } catch (err) {
+      toast.error('Error al exportar los datos.', { id: toastId });
+      console.error('Error exportando datos', err);
     }
   };
 
-  const isDataReady = !isLoading && !error && summary;
+  const header = (
+    <PageHeader
+      title="Dashboard del sistema"
+      description="Estado del catálogo, el stock y la sincronización con proveedores"
+      actions={(
+        <>
+          {GRAFANA_DASHBOARD_URL && <ExternalLinkButton href={GRAFANA_DASHBOARD_URL}>Grafana</ExternalLinkButton>}
+          {PROMETHEUS_DASHBOARD_URL && <ExternalLinkButton href={PROMETHEUS_DASHBOARD_URL}>Estado del sistema</ExternalLinkButton>}
+          <Button variant="secondary" icon={<Download />} onClick={handleExport}>Exportar datos (ZIP)</Button>
+        </>
+      )}
+    />
+  );
+
+  if (isLoading) {
+    return (
+      <>
+        {header}
+        <div aria-busy="true" className="page-stack">
+          <span className="sr-only" role="status">Cargando datos del panel...</span>
+          <StatGrid>{[0, 1, 2].map((i) => <Card key={i}><Skeleton width="md" /><Skeleton width="sm" /></Card>)}</StatGrid>
+          <Card><Skeleton shape="block" /></Card>
+        </div>
+      </>
+    );
+  }
+
+  if (error || !summary) {
+    return (
+      <>
+        {header}
+        <EmptyState
+          tone="error"
+          title="No se pudieron cargar los datos del panel."
+          action={<Button variant="secondary" onClick={() => refetch()}>Reintentar</Button>}
+        />
+      </>
+    );
+  }
+
+  const stockTotal = summary.productsAvailable + summary.productsLowStock + summary.productsOutOfStock;
+  const share = (n: number) => (stockTotal ? `${Math.round((n / stockTotal) * 100)} % del catálogo` : undefined);
+  const showBrands = isAdmin || isCliente;
+  let order = 0;
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <h1 className="dashboard-title dashboard-title-row">
-            <LayoutDashboard size={24} aria-hidden="true" />
-            Dashboard de Sistema
-          </h1>
-          <div className="header-actions">
-            <button onClick={handleExport} className="action-button">
-              <Download size={16} aria-hidden="true" />
-              Exportar Datos (ZIP)
-            </button>
-            {GRAFANA_DASHBOARD_URL && (
-              <a
-                href={GRAFANA_DASHBOARD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="action-button secondary"
-              >
-                <ExternalLink size={16} aria-hidden="true" />
-                Ver dashboard en Grafana
-              </a>
-            )}
-            {PROMETHEUS_DASHBOARD_URL && (
-              <a
-                href={PROMETHEUS_DASHBOARD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="action-button secondary"
-              >
-                <ExternalLink size={16} aria-hidden="true" />
-                Ver estado del sistema
-              </a>
-            )}
-          </div>
-        </div>
-      </header>
+    <>
+      {header}
 
-      <main style={{ display: "flex", flexDirection: "column", gap: "1.5rem", marginTop: '2rem' }}>
-        {isDataReady ? (
-          <>
-            {(isAdmin || isCliente) && <SystemStatus failedProviders={summary.failedProviders} />}
-
-            <div className={`dashboard-grid ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
-              <KpiCard title="Total Productos" value={summary.totalProducts} icon={<Package size={20} />} iconClass="icon-blue" />
-              <KpiCard title="Total Proveedores" value={summary.totalSuppliers} icon={<Building2 size={20} />} iconClass="icon-purple" />
-              {isAdmin && <KpiCard title="Latencia API" value={summary.avgLatencyOverall.toFixed(0)} unit="ms" icon={<Gauge size={20} />} iconClass="icon-green" />}
-            </div>
-
-            <div className="dashboard-grid grid-cols-3">
-              <SemaphoreCard label="Disponibles" value={summary.productsAvailable} colorClass="bg-green" />
-              <SemaphoreCard label="Bajo Stock" value={summary.productsLowStock} colorClass="bg-yellow" />
-              <SemaphoreCard label="Sin Stock" value={summary.productsOutOfStock} colorClass="bg-red" />
-            </div>
-
-            {isAdmin && (
-              <div className="dashboard-grid grid-cols-2-3">
-                <ChartCard title="Salud de Sincronización con APIs externas (7d)" className="col-span-2">
-                  <SyncAreaChart data={summary.syncHistory} />
-                </ChartCard>
-                <ChartCard title="Top Marcas">
-                  <BrandPieChart data={summary.productsByBrand} />
-                </ChartCard>
-              </div>
-            )}
-            {!isAdmin && isCliente && (
-              <ChartCard title="Top Marcas">
-                <BrandPieChart data={summary.productsByBrand} />
-              </ChartCard>
-            )}
-
-            <ChartCard title="Volumen de Stock por Proveedor">
-              <StockBarChart data={summary.stockBySupplier} />
-            </ChartCard>
-
-            {isAdmin && supplierHealth && (
-              <SupplierHealthSection data={supplierHealth} />
-            )}
-          </>
-        ) : (
-          <div className="centered-message">Cargando datos del panel...</div>
+      <div className="page-stack">
+        {(isAdmin || isCliente) && (
+          <Reveal index={order++}><SystemStatus failedProviders={summary.failedProviders} /></Reveal>
         )}
-      </main>
-    </div>
+
+        <Reveal index={order++}>
+          <StatGrid>
+            <StatTile label="Productos" value={formatNumber(summary.totalProducts)} icon={<Package />} />
+            <StatTile label="Proveedores" value={formatNumber(summary.totalSuppliers)} icon={<Building2 />} />
+            {isAdmin && (
+              <StatTile label="Latencia media de API" value={`${formatNumber(Math.round(summary.avgLatencyOverall))} ms`} icon={<Gauge />} />
+            )}
+          </StatGrid>
+        </Reveal>
+
+        <Reveal index={order++}>
+          <StatGrid>
+            <StatTile label="Disponibles" value={formatNumber(summary.productsAvailable)} hint={share(summary.productsAvailable)} icon={<CircleCheck />} tone="success" />
+            <StatTile label="Bajo stock" value={formatNumber(summary.productsLowStock)} hint={share(summary.productsLowStock)} icon={<TriangleAlert />} tone="warning" />
+            <StatTile label="Sin stock" value={formatNumber(summary.productsOutOfStock)} hint={share(summary.productsOutOfStock)} icon={<CircleSlash />} tone="danger" />
+          </StatGrid>
+        </Reveal>
+
+        <div className="page-grid">
+          {isAdmin && (
+            <Reveal index={order++}>
+              <Card title="Sincronización con APIs externas (7 días)">
+                <SyncHistoryChart data={summary.syncHistory} />
+              </Card>
+            </Reveal>
+          )}
+          {showBrands && (
+            <Reveal index={order++}>
+              <Card title="Marcas con más productos">
+                <HorizontalBarChart
+                  data={summary.productsByBrand}
+                  valueName="Productos"
+                  formatValue={formatNumber}
+                  label={`Marcas con más productos; la primera es ${summary.productsByBrand[0]?.label ?? '—'}`}
+                  animate
+                />
+              </Card>
+            </Reveal>
+          )}
+        </div>
+
+        <Reveal index={order++}>
+          <Card title="Stock por proveedor">
+            <HorizontalBarChart
+              data={summary.stockBySupplier}
+              valueName="Unidades en stock"
+              formatValue={formatNumber}
+              label="Unidades en stock por proveedor"
+              limit={15}
+              animate
+            />
+          </Card>
+        </Reveal>
+
+        {isAdmin && supplierHealth && (
+          <Reveal index={order++}>
+            <Card title="Salud de proveedores" flush>
+              <DataTable
+                caption="Indicadores de salud por proveedor"
+                columns={healthColumns}
+                data={supplierHealth}
+                emptyMessage="Aún no hay datos de sincronización; los indicadores aparecerán tras la primera."
+                keyExtractor={(r) => r.supplierId}
+              />
+            </Card>
+          </Reveal>
+        )}
+      </div>
+    </>
   );
 };
 
