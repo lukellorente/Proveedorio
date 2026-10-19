@@ -1,4 +1,4 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.supplier;
 
 import com.proveedorio.backend.dtos.supplier.SupplierMappingDto;
 import com.proveedorio.backend.dtos.supplier.SupplierMappingRequestDto;

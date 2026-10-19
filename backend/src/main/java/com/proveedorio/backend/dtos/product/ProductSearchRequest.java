@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 /**
  * Parámetros de búsqueda y paginación para el listado de productos.
- * Usado por el controlador de productos y por {@link com.proveedorio.backend.service.StockServiceImpl#searchProducts}.
+ * Usado por el controlador de productos y por {@link com.proveedorio.backend.service.product.StockServiceImpl#searchProducts}.
  */
 public record ProductSearchRequest(
     String query,

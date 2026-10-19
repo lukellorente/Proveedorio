@@ -1,4 +1,4 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.dashboard;
 
 import com.proveedorio.backend.dtos.dashboard.*;
 import com.proveedorio.backend.dtos.supplier.ProviderStatusDto;

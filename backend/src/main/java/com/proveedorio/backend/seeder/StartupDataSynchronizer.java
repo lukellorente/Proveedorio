@@ -2,7 +2,7 @@ package com.proveedorio.backend.seeder;
 
 import com.proveedorio.backend.repository.MasterProductRepository;
 import com.proveedorio.backend.service.CurrencyRateService;
-import com.proveedorio.backend.service.IStockService;
+import com.proveedorio.backend.service.product.IStockService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  *     <li>Al arranque de la aplicación (si la base está vacía, hace una carga inicial).</li>
  *     <li>De forma periódica cada 6 horas mediante una tarea programada.</li>
  * </ul>
- * La coordinación entre réplicas se realiza a través de {@link com.proveedorio.backend.service.SyncStateService}.
+ * La coordinación entre réplicas se realiza a través de {@link com.proveedorio.backend.service.product.SyncStateService}.
  */
 @Component
 @Profile("!test")

@@ -98,7 +98,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtService.extractAllClaims(jwt);
 
             // Extraer roles del claim personalizado y construir las authorities de Spring Security
-            List<String> roles = claims.get("roles", List.class);
+            List<String> roles = claims.get("roles") instanceof List<?> rawRoles
+                    ? rawRoles.stream().map(String::valueOf).toList()
+                    : List.of();
             UserDetails userDetails = new User(username, "", roles.stream()
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList()));

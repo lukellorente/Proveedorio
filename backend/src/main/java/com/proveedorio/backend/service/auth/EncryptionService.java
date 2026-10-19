@@ -1,4 +1,4 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.auth;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;

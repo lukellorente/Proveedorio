@@ -1,5 +1,6 @@
-package com.proveedorio.backend.service;
+package com.proveedorio.backend.service.supplier;
 
+import com.proveedorio.backend.service.auth.EncryptionService;
 import com.proveedorio.backend.dtos.supplier.SupplierDashboardDto;
 import com.proveedorio.backend.dtos.supplier.SupplierRequestDto;
 import com.proveedorio.backend.dtos.supplier.SupplierResponseDto;

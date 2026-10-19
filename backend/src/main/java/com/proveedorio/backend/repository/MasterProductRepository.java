@@ -14,7 +14,7 @@ import java.util.Optional;
 
 /**
  * Repositorio de acceso a datos para la entidad {@link MasterProduct}.
- * Usado por {@link com.proveedorio.backend.service.StockServiceImpl} para búsqueda, paginación y sincronización,
+ * Usado por {@link com.proveedorio.backend.service.product.StockServiceImpl} para búsqueda, paginación y sincronización,
  * y por el dashboard para métricas de inventario.
  */
 @Repository

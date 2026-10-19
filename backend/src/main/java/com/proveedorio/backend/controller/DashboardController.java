@@ -2,8 +2,8 @@ package com.proveedorio.backend.controller;
 
 import com.proveedorio.backend.dtos.dashboard.DashboardSummaryDto;
 import com.proveedorio.backend.dtos.dashboard.SupplierHealthDto;
-import com.proveedorio.backend.service.DashboardService;
-import com.proveedorio.backend.service.ExportService;
+import com.proveedorio.backend.service.dashboard.DashboardService;
+import com.proveedorio.backend.service.dashboard.ExportService;
 import com.proveedorio.backend.service.dashboard.SupplierHealthService;
 import com.proveedorio.backend.util.ApiResponse;
 import org.slf4j.Logger;
