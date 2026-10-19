@@ -35,8 +35,10 @@
 
   --text-primary: #1f2f3a;
   --text-secondary: #3e5564;
-  --text-muted: #6d8492;
-  --text-placeholder: #9ab0be;
+  /* Ajustados a WCAG AA (4.5:1) sobre blanco y --bg-primary */
+  --text-muted: #5a7180;
+  --text-placeholder: #5d7483;
+  --text-on-primary: var(--corp-white);
 
   /* Semantic aliases */
   --color-primary: var(--corp-primary);
@@ -85,7 +87,65 @@
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
+  --radius-full: 9999px;
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 1px 2px rgba(9, 31, 44, 0.06);
+  --shadow-raised: 0 6px 16px -4px rgba(9, 31, 44, 0.16);
+
+  /* Escala de espaciado */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  /* Escala tipográfica */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 64px;
+  --topbar-height: 56px;
+  --control-height-sm: 28px;
+  --control-height-md: 36px;
+  --table-row-height: 32px;
+  --z-sticky: 5;
+  --z-shell: 20;
+  --z-overlay: 40;
+
+  /* Movimiento */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Paleta categórica de gráficos (provisional, pendiente de validar con marca).
+     Todos los tonos >= 3:1 sobre blanco; el rojo corporativo nunca es una serie. */
+  --chart-1: var(--brand-700);
+  --chart-2: #c07a12;
+  --chart-3: #6a5fb5;
+  --chart-4: #2f8a72;
+  --chart-5: #8a3570;
+  --chart-6: #3f78b8;
+  --chart-7: #8b5e34;
+  --chart-8: #4a3f7a;
+  --chart-highlight: var(--corp-primary);
+  --chart-grid: var(--brand-200);
+  --chart-axis: var(--text-muted);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
@@ -102,6 +162,36 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display);
+}
+
+/* =============================
+   Utilidades
+============================= */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Estilos globales para la Navbar */

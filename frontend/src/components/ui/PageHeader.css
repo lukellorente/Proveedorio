@@ -1,0 +1,70 @@
+.page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.page-heading__text {
+  min-width: 0;
+}
+
+/* Anula los estilos globales de <nav> en index.css */
+.page-heading .page-heading__breadcrumb {
+  padding: 0;
+  background: none;
+  border: 0;
+  margin-bottom: var(--space-1);
+}
+
+.page-heading__breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.page-heading__breadcrumb li + li::before {
+  content: '/';
+  margin-right: var(--space-1);
+  color: var(--text-muted);
+}
+
+.page-heading .page-heading__breadcrumb a {
+  display: inline;
+  padding: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.page-heading .page-heading__breadcrumb a:hover {
+  background: none;
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.page-heading__title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-brand-title);
+}
+
+.page-heading__description {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-md);
+  color: var(--text-muted);
+}
+
+.page-heading__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
