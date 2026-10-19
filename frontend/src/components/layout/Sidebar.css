@@ -1,0 +1,211 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-shell);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--bg-tertiary);
+  transition: width var(--duration-base) var(--ease-standard);
+  box-sizing: border-box;
+}
+
+.sidebar--collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  height: var(--topbar-height);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--bg-tertiary);
+  box-sizing: border-box;
+}
+
+.sidebar__brand:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.sidebar__logo {
+  display: block;
+  height: 30px;
+  width: auto;
+}
+
+.sidebar--collapsed .sidebar__brand {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background-color: var(--corp-institutional);
+  color: var(--text-on-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+/* Anula los estilos globales de <nav> en index.css */
+.sidebar .sidebar__nav {
+  flex: 1;
+  display: block;
+  padding: var(--space-3) var(--space-2);
+  background: none;
+  border: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar .sidebar__link,
+.sidebar__sync {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.sidebar .sidebar__link:hover {
+  background-color: var(--brand-100);
+  color: var(--text-primary);
+}
+
+.sidebar .sidebar__link--active {
+  background-color: var(--brand-100);
+  color: var(--color-brand-title);
+  font-weight: 600;
+}
+
+.sidebar .sidebar__link--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+}
+
+.sidebar .sidebar__link:focus-visible,
+.sidebar__sync:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.sidebar__icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar__icon--spin {
+  animation: sidebar-spin 1s linear infinite;
+}
+
+@keyframes sidebar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sidebar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  border-top: 1px solid var(--bg-tertiary);
+}
+
+.sidebar__sync {
+  background-color: var(--color-primary);
+  color: var(--text-on-primary);
+  font-weight: 600;
+}
+
+.sidebar__sync:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.sidebar__sync:disabled {
+  cursor: progress;
+  background-color: var(--color-primary-hover);
+}
+
+/* ---- Plegada: carril de iconos con etiquetas como tooltip ---- */
+.sidebar--collapsed .sidebar__link,
+.sidebar--collapsed .sidebar__sync {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar--collapsed .sidebar__label {
+  position: absolute;
+  left: calc(100% + var(--space-2));
+  top: 50%;
+  z-index: var(--z-overlay);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--corp-institutional);
+  color: var(--text-on-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%);
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.sidebar--collapsed .sidebar__link:hover .sidebar__label,
+.sidebar--collapsed .sidebar__link:focus-visible .sidebar__label,
+.sidebar--collapsed .sidebar__sync:hover .sidebar__label,
+.sidebar--collapsed .sidebar__sync:focus-visible .sidebar__label {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar--collapsed .sidebar__nav {
+  overflow: visible;
+}

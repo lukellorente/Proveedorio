@@ -1,4 +1,5 @@
-import { useState, useMemo, type ChangeEvent, type FormEvent } from 'react';
+import { useState, useMemo, useEffect, type ChangeEvent, type FormEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts, searchProducts } from 'features/inventory/services/productService';
 import ProductTable, { SortField, SortDirection } from 'features/inventory/components/ProductTable';
@@ -9,9 +10,12 @@ import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { Search, SlidersHorizontal } from 'lucide-react';
 
 const InventoryDashboardPage = () => {
-  const [queryInput, setQueryInput] = useState('');
+  // La búsqueda global de la barra superior llega como ?q=
+  const [searchParams] = useSearchParams();
+  const urlQuery = searchParams.get('q') ?? '';
+  const [queryInput, setQueryInput] = useState(urlQuery);
   const [specsInput, setSpecsInput] = useState('');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(urlQuery);
   const [specsFilter, setSpecsFilter] = useState('');
 
   const debouncedSpecsFilter = useDebounce(specsFilter, 300);
@@ -19,6 +23,12 @@ const InventoryDashboardPage = () => {
   const [sortBy, setSortBy] = useState<SortField>('model');
   const [direction, setDirection] = useState<SortDirection>('ASC');
   const PAGE_SIZE = 20;
+
+  useEffect(() => {
+    setQueryInput(urlQuery);
+    setQuery(urlQuery);
+    setPage(0);
+  }, [urlQuery]);
 
   // Fetch products via API based on query, sort, page AND specsFilter
   const { data: productsResponse, isLoading, isFetching, isError, refetch } = useQuery({
