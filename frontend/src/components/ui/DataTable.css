@@ -83,6 +83,7 @@
 .data-table__cell--left { text-align: left; }
 .data-table__cell--center { text-align: center; }
 .data-table__cell--right { text-align: right; }
+.data-table__cell--grow { width: 40%; min-width: 220px; }
 
 .data-table__header.data-table__cell--right .data-table__sort {
   flex-direction: row-reverse;
@@ -100,4 +101,47 @@
 .data-table__row--clickable:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: -2px;
+}
+
+/* Botones de acción dentro de una celda */
+.data-table__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+/* Casilla de selección en celda o cabecera */
+.data-table__checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--corp-institutional);
+  cursor: pointer;
+}
+
+.data-table__checkbox:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Texto secundario bajo el principal de una celda */
+.data-table__secondary {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.data-table__row--muted .data-table__cell {
+  color: var(--text-muted);
+  background-color: var(--bg-primary);
+}
+
+/* Dentro de una tarjeta sin padding, la tarjeta pone el borde */
+.card__body--flush > .data-table__container {
+  border: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: none;
 }

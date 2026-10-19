@@ -91,6 +91,7 @@
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-sm: 0 1px 2px rgba(9, 31, 44, 0.06);
   --shadow-raised: 0 6px 16px -4px rgba(9, 31, 44, 0.16);
+  --overlay-backdrop: rgba(9, 31, 44, 0.45);
 
   /* Escala de espaciado */
   --space-1: 0.25rem;
@@ -171,6 +172,60 @@ h6 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Secciones apiladas de una página (tarjetas, tablas) */
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Columnas de tarjetas que se reparten el ancho */
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-5);
+}
+
+/* Los hijos pueden encogerse por debajo del ancho de sus tablas (que hacen scroll dentro) */
+.page-stack > *,
+.page-grid > * {
+  min-width: 0;
+}
+
+/* Contenido principal + columna lateral fija (resúmenes, filtros) */
+.page-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.page-split__aside {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-4));
+}
+
+.page-split__note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.page-split__cta {
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 1023px) {
+  .page-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-split__aside {
+    position: static;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -194,94 +249,7 @@ h6 {
   }
 }
 
-/* Estilos globales para la Navbar */
-nav,
-header {
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--bg-tertiary);
-  padding: 1rem;
-}
-
-/* Estilos mejorados para enlaces en la navbar */
-nav a,
-header a {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-nav a:hover,
-header a:hover {
-  background-color: var(--brand-100);
-  color: var(--brand-600);
-}
-
-/* Botones Globales */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: 1px solid transparent;
-  line-height: 1.25rem;
-  text-decoration: none;
-  white-space: nowrap;
-  /* Previene que el boton parta las palabras a la mitad */
-}
-
-.btn:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
-
-.btn-primary {
-  background-color: var(--color-primary);
-  color: white;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  white-space: nowrap;
-  /* Previene rotura de palabra */
-}
-
-.btn-primary:hover {
-  background-color: var(--color-primary-hover);
-  transform: translateY(-1px);
-}
-
-.btn-primary:active {
-  background-color: var(--color-primary-active);
-}
-
-.btn-primary:disabled {
-  background-color: var(--color-primary-disabled);
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  background-color: var(--bg-secondary);
-  border-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  white-space: nowrap;
-  /* Evita rotura de palabras */
-}
-
-.btn-secondary:hover {
-  background-color: var(--bg-primary);
-  border-color: var(--text-placeholder);
-  color: var(--brand-600);
-}
-
-/* Scrollbar personalizada para modo oscuro */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -298,226 +266,4 @@ header a:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
-}
-
-/* =============================
-   Estilos Globales de Tabla y Páginas de Listado
-============================= */
-
-/* Contenedores de Página */
-.list-page-container {
-  min-height: 100vh;
-  padding: 1.5rem;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.page-title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-/* Botón Crear Global (arriba a la derecha) */
-.btn-create {
-  background-color: var(--color-primary);
-  color: white;
-  font-weight: 700;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  transition: background-color 0.2s;
-  box-shadow: var(--shadow-card);
-  display: inline-block;
-}
-
-.btn-create:hover {
-  background-color: var(--color-primary-hover);
-}
-
-/* Contenedor de tabla estándar */
-.table-container {
-  overflow-x: auto;
-  border: 1px solid var(--bg-tertiary);
-  /* Soft border instead of pure white */
-  background-color: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  width: 100%;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-/* Tabla en sí */
-.data-table {
-  width: 100%;
-  text-align: left;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  table-layout: fixed;
-  word-break: break-word;
-  /* Para columnas largas como IDs */
-  white-space: normal;
-}
-
-.data-table thead {
-  background-color: var(--bg-tertiary);
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  color: var(--text-primary);
-}
-
-.data-table th {
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-}
-
-.data-table td {
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid var(--bg-tertiary);
-  vertical-align: middle;
-  overflow-wrap: break-word;
-  min-width: 0;
-  /* Previene desbordamiento en flex/grid children ocultos */
-}
-
-.data-table tbody tr {
-  transition: background-color 0.2s;
-}
-
-/* Zebra striping opcional o solo hover en todas */
-.data-table tbody tr:hover {
-  background-color: var(--bg-tertiary);
-}
-
-.data-table .clickable-row {
-  cursor: pointer;
-}
-
-/* Celdas de Acción (Botones de editar, eliminar) */
-.actions-cell {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  /* En móviles bajan */
-  white-space: nowrap;
-  /* Tienen su propia forma */
-  justify-content: flex-end;
-  padding-right: 1rem;
-}
-
-.btn-action {
-  font-weight: 600;
-  font-size: 0.875rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  transition: all 0.2s;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  /* Soft shadow */
-}
-
-.btn-action-edit {
-  background-color: var(--color-secondary);
-  color: white;
-}
-
-.btn-action-edit:hover {
-  background-color: var(--color-secondary-hover);
-}
-
-.btn-action-delete {
-  background-color: var(--color-danger);
-  color: white;
-}
-
-.btn-action-delete:hover {
-  background-color: var(--color-danger-hover);
-}
-
-/* Utilidades para los mensajes de la tabla (Loading/Error) */
-.table-message-center {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-secondary);
-  font-size: 1rem;
-}
-
-.error-boundary-box {
-  border: 1px solid var(--color-danger);
-  background-color: var(--color-status-error-bg);
-  color: var(--color-danger-hover);
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  margin: 1rem 0;
-}
-
-/* =============================
-   Responsive Design (Desktop-First)
-============================= */
-@media (max-width: 1024px) {
-  .list-page-container {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-  }
-
-  .btn-create {
-    width: 100%;
-    text-align: center;
-  }
-
-  .data-table th, .data-table td {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .actions-cell {
-    padding-right: 0.5rem;
-    gap: 0.25rem;
-  }
-  
-  .btn-action {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
-  
-  .table-container {
-    border-radius: var(--radius-md);
-  }
-}
-
-@media (max-width: 480px) {
-  html {
-    font-size: 13px; 
-  }
-  
-  .data-table th, .data-table td {
-    padding: 0.4rem 0.5rem;
-  }
 }
